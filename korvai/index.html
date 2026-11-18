@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korvai Studio | Carnatic korvai tools for mridangam, kanjira and ghatam</title>
+<!-- script>
+// Login guard: send visitors to the login page unless they have signed in this session.
+try { if (sessionStorage.getItem('korvaiAuth') !== '1') location.replace('login.html'); } catch (e) { location.replace('login.html'); }
+</script -->
+
+<meta name="description" content="Decode matra counts and generate korvais for mridangam, kanjira, ghatam and other Carnatic percussion.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0a1330;--navy2:#13235a;--blue:#2f5bea;--indigo:#5b4bdb;--teal:#0ea5a4;--amber:#f59e0b;
+  --bg:#eef2f9;--paper:#ffffff;--ink:#0f1b3d;--muted:#5d6b88;--line:#dde4f0;--soft:#f5f8fd;
+  --p:#2f5bea;--m:#0d9488;--u:#d97706;--err:#c62828;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:linear-gradient(180deg,#f1f4fb,#e7edf8);background-attachment:fixed;line-height:1.5;min-height:100vh}
+
+/* ---------- Mandala artwork ---------- */
+.mandala{position:absolute;pointer-events:none;color:currentColor;display:block}
+.m-hero{width:620px;height:620px;right:-150px;top:-250px;color:#8fb2ff;opacity:.28;animation:spin 180s linear infinite}
+.m-hero2{width:360px;height:360px;left:-120px;bottom:-190px;color:#2dd4bf;opacity:.18;animation:spin 140s linear infinite reverse}
+.m-bg1{position:fixed;width:560px;height:560px;left:-190px;bottom:-190px;color:var(--blue);opacity:.07;z-index:0}
+.m-bg2{position:fixed;width:460px;height:460px;right:-170px;top:42%;color:var(--teal);opacity:.07;z-index:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.m-hero,.m-hero2{animation:none}html{scroll-behavior:auto}}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;overflow:hidden;z-index:0;color:#fff;padding:34px 0 96px;
+  background:radial-gradient(800px 380px at 88% -15%,#4a5df055,transparent 62%),radial-gradient(520px 280px at 8% 115%,#0ea5a438,transparent 60%),linear-gradient(135deg,var(--navy),var(--navy2))}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px;position:relative;z-index:1}
+.hero .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:18px}
+.logo{position:relative;flex:none;width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--blue),var(--teal));display:grid;place-items:center;box-shadow:0 10px 28px #2f5bea66,inset 0 0 0 1px #ffffff40}
+.logo svg{width:44px;height:44px;color:#fff}
+.eyebrow{font-size:11.5px;letter-spacing:2px;text-transform:uppercase;color:#7ee7de;font-weight:700;margin:0 0 4px}
+.hero h1{margin:0;font-family:Calibri,Carlito,Lato,'Segoe UI',system-ui,sans-serif;font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.2px;font-weight:300}
+.hero h1 .t-bold{font-weight:900}
+.hero .tagline{margin:8px 0 10px;font-family:Calibri,Carlito,Lato,'Segoe UI',system-ui,sans-serif}
+.hero-right{display:flex;flex-direction:column;align-items:flex-end;gap:16px}
+.hero-bars{display:block;width:min(240px,100%);height:auto}
+@media(max-width:620px){.hero-right{align-items:flex-start}.hero-bars{width:180px}}
+.hero p.sub{margin:6px 0 0;color:#c9d6f5;font-size:14.5px}
+.flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.flow a{display:flex;align-items:center;gap:9px;text-decoration:none;color:#e6edff;background:#ffffff14;border:1px solid #ffffff2a;backdrop-filter:blur(6px);padding:9px 16px 9px 10px;border-radius:999px;font-size:13.5px;font-weight:650;transition:.2s}
+.flow a:hover{background:#ffffff26;transform:translateY(-1px)}
+.flow b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--teal));font-size:12px}
+.flow .arrow{color:#7f93c9}
+
+.signout{border:1px solid #ffffff3a;background:#ffffff14;color:#e6edff;border-radius:999px;padding:7px 16px;font:650 12.5px inherit;cursor:pointer;transition:.2s}
+.signout:hover{background:#ffffff26}
+/* ---------- Layout ---------- */
+main{position:relative;z-index:2;max-width:1180px;margin:-62px auto 0;padding:0 22px 28px;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:22px;align-items:stretch}
+.card{position:relative;overflow:hidden;display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:0 22px 44px -22px #0f1b3d4d,0 2px 6px #0f1b3d0d}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,var(--blue),var(--indigo),var(--teal))}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.step{flex:none;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--blue),var(--indigo));color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px;box-shadow:0 6px 14px #2f5bea44}
+.card h2{margin:0;font-size:20px;letter-spacing:-.2px}
+.intro{margin:10px 0 20px;color:var(--muted);font-size:14px}
+
+/* ---------- Form ---------- */
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:18px}
+.seg label{margin:0;cursor:pointer;position:relative;display:block}
+.seg input{position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer;margin:0}
+.seg span{display:block;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:650;color:#51618a;text-align:center;transition:.18s}
+.seg input:checked+span{background:linear-gradient(135deg,var(--blue),var(--indigo));color:#fff;box-shadow:0 6px 14px #2f5bea40}
+.seg input:focus-visible+span{outline:3px solid #2f5bea55;outline-offset:1px}
+.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+.grid>div{grid-column:span 3;min-width:0}
+.grid>.full{grid-column:span 6}
+.grid>.third{grid-column:span 2}
+.grid [hidden]{display:none}
+label.lbl{display:block;font-size:11.5px;font-weight:750;margin-bottom:6px;color:#4a5a82;text-transform:uppercase;letter-spacing:.6px}
+input[type=text],select{width:100%;min-height:46px;border:1.5px solid #d3dbec;border-radius:11px;padding:10px 12px;font:inherit;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+input[type=text]:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 4px #2f5bea22}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.chips .hint{margin:0}
+.chip{border:1px solid #cfd9f0;background:var(--soft);color:#3b4d7d;border-radius:999px;padding:4px 12px;font:600 12.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;cursor:pointer;transition:.15s}
+.chip:hover{border-color:var(--blue);color:var(--blue);background:#fff}
+.actions{margin-top:22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+button.primary{background:linear-gradient(135deg,var(--blue),var(--indigo));color:#fff;border:0;border-radius:11px;padding:13px 26px;font:inherit;font-weight:750;cursor:pointer;box-shadow:0 8px 18px -4px #2f5bea66;transition:.18s;min-height:46px}
+button.primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+button.primary:disabled{background:#b9c4de;box-shadow:none;cursor:not-allowed;transform:none;filter:none}
+button:focus-visible{outline:3px solid #2f5bea66;outline-offset:2px}
+.error{color:var(--err);font-size:13px;font-weight:600;min-height:20px}
+
+/* ---------- Results ---------- */
+.results{margin-top:22px;padding:18px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#f7f9ff,#f1f5fd);display:none;animation:rise .3s ease}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.results h3{margin:0 0 4px;font-size:16px}
+.result-intro{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+.answer-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.answer-card{font:inherit;color:inherit;width:100%;cursor:pointer;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:13px 10px;text-align:center;transition:.15s}
+.answer-card:hover{border-color:#9db4f2;transform:translateY(-2px);box-shadow:0 8px 18px -8px #2f5bea55}
+.answer-card.selected{border-color:var(--blue);background:#eef3ff;box-shadow:0 0 0 3px #2f5bea26}
+.answer-card .number{display:block;color:var(--muted);font-size:11px;margin-bottom:3px;text-transform:uppercase;letter-spacing:.6px}
+.answer-card strong{display:block;font-size:20px;color:var(--blue)}
+.answer-card .detail{display:block;margin-top:5px;color:var(--muted);font-size:12px}
+.select-bar{display:none;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+
+/* ---------- Generator ---------- */
+.gen-input{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.gen-input>div{flex:1;min-width:150px}
+#genCard{transition:box-shadow .4s}
+#genCard.flash{box-shadow:0 0 0 4px #14b8a666,0 22px 44px -22px #0f1b3d4d}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;margin:0 0 12px;font-weight:700}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:currentColor;vertical-align:-1px}
+.korvai-list{display:grid;gap:11px}
+.korvai-card{background:#fff;border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:11px;padding:13px 14px;box-shadow:0 4px 12px -8px #0f1b3d40}
+.korvai-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.korvai-card .number{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.copy{border:1px solid var(--line);background:var(--soft);border-radius:8px;padding:3px 11px;font:600 12px inherit;color:#3b4d7d;cursor:pointer}
+.copy:hover{border-color:var(--blue);color:var(--blue)}
+.korvai-line{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14.5px;line-height:1.75;overflow-wrap:anywhere}
+.korvai-p{color:var(--p);font-weight:650}
+.korvai-u{color:var(--u);font-weight:650}
+.korvai-m{color:var(--m);font-weight:650}
+.korvai-plus{color:#9aa7c4}
+.korvai-meta{color:var(--muted);font-size:12px;margin-top:5px}
+.result-intro:empty{display:none}
+.gen-count{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;padding:9px 12px;border-radius:10px;background:#eaf7f6;border:1px solid #bfe6e3;color:#0b6b66;font-size:13px;font-weight:650}
+.gen-count:empty{display:none}
+.gen-nav{display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px}
+.gen-nav .page-info{color:var(--muted);font-size:13px;font-weight:650}
+.gen-nav .nav-btns{display:flex;gap:8px}
+.nav-btn{border:1.5px solid var(--line);background:#fff;color:#3b4d7d;border-radius:10px;padding:9px 16px;font:700 13px inherit;cursor:pointer;transition:.15s}
+.nav-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue)}
+.nav-btn.next:not(:disabled){background:linear-gradient(135deg,var(--blue),var(--indigo));color:#fff;border-color:transparent}
+.nav-btn:disabled{opacity:.45;cursor:not-allowed}
+.gen-tip{display:none;margin:10px 0 0;color:var(--muted);font-size:12px}
+.status{color:var(--m);font-size:13px;font-weight:650}
+.rep{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px dashed var(--line)}
+.korvai-top+.rep{border-top:0}
+.rep-n{flex:none;width:22px;height:22px;border-radius:7px;background:var(--soft);border:1px solid var(--line);color:#3b4d7d;font:700 11.5px system-ui,sans-serif;display:grid;place-items:center;align-self:flex-start;margin-top:3px}
+.rep .korvai-line{flex:1;min-width:0}
+.rep-tot{flex:none;color:var(--muted);font:600 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.empty{margin-top:22px;flex:1;min-height:200px;display:grid;place-items:center;align-content:center;gap:10px;text-align:center;padding:26px;border:1.5px dashed #cdd8ee;border-radius:14px;background:var(--soft);color:var(--muted);font-size:13.5px}
+.empty svg{width:92px;height:92px;color:var(--blue);opacity:.45}
+.results[style*="block"]+.empty{display:none}
+
+/* ---------- Notes ---------- */
+.notes{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 22px 22px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:start}
+details{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:0 20px;box-shadow:0 8px 20px -14px #0f1b3d40}
+summary{cursor:pointer;padding:15px 0;font-weight:700;font-size:14px;color:#33447a;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:20px;color:var(--blue);line-height:1}
+details[open] summary::after{content:"–"}
+details p{margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.65}
+footer{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:8px 22px 36px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+
+@media(max-width:980px){main{grid-template-columns:1fr}.notes{grid-template-columns:1fr}.m-hero{width:460px;height:460px;right:-170px;top:-200px}}
+@media(max-width:620px){.grid>div,.grid>.third{grid-column:span 6}.answer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:22px 18px}.flow{display:none}.hero{padding-bottom:84px}.seg{grid-template-columns:1fr}}
+@media(max-width:620px){
+.hero{padding:14px 0 40px}
+.hero .wrap{flex-wrap:nowrap;gap:12px}
+.brand{gap:12px;min-width:0}
+.logo{width:44px;height:44px;border-radius:13px}.logo svg{width:30px;height:30px}
+.hero h1{font-size:28px;line-height:1.1}
+.hero .tagline{margin:6px 0 0;font-size:10.5px;letter-spacing:1.5px}
+.hero-right{flex:none;align-items:flex-end}
+.hero-bars{width:92px}
+main{margin-top:-26px;padding:0 14px 20px;gap:16px}
+.card{padding:18px 16px}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<path id="pOuter" d="M0,-188 C15,-170 15,-150 0,-128 C-15,-150 -15,-170 0,-188Z"/>
+<path id="pMid" d="M0,-146 C28,-124 28,-96 0,-68 C-28,-96 -28,-124 0,-146Z"/>
+<path id="pBig" d="M0,-104 C32,-82 32,-52 0,-22 C-32,-52 -32,-82 0,-104Z"/>
+<circle id="dot" cx="0" cy="-174" r="2.4"/>
+<symbol id="mandala" viewBox="-200 -200 400 400"><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">
+<circle r="196"/><circle r="190" stroke-dasharray="2 5"/><circle r="124"/><circle r="66" stroke-width="1.6"/><circle r="40"/><circle r="12" fill="currentColor"/>
+<use href="#pOuter" transform="rotate(0)"/><use href="#pOuter" transform="rotate(15)"/><use href="#pOuter" transform="rotate(30)"/><use href="#pOuter" transform="rotate(45)"/><use href="#pOuter" transform="rotate(60)"/><use href="#pOuter" transform="rotate(75)"/><use href="#pOuter" transform="rotate(90)"/><use href="#pOuter" transform="rotate(105)"/><use href="#pOuter" transform="rotate(120)"/><use href="#pOuter" transform="rotate(135)"/><use href="#pOuter" transform="rotate(150)"/><use href="#pOuter" transform="rotate(165)"/><use href="#pOuter" transform="rotate(180)"/><use href="#pOuter" transform="rotate(195)"/><use href="#pOuter" transform="rotate(210)"/><use href="#pOuter" transform="rotate(225)"/><use href="#pOuter" transform="rotate(240)"/><use href="#pOuter" transform="rotate(255)"/><use href="#pOuter" transform="rotate(270)"/><use href="#pOuter" transform="rotate(285)"/><use href="#pOuter" transform="rotate(300)"/><use href="#pOuter" transform="rotate(315)"/><use href="#pOuter" transform="rotate(330)"/><use href="#pOuter" transform="rotate(345)"/><use href="#pMid" transform="rotate(15)"/><use href="#pMid" transform="rotate(45)"/><use href="#pMid" transform="rotate(75)"/><use href="#pMid" transform="rotate(105)"/><use href="#pMid" transform="rotate(135)"/><use href="#pMid" transform="rotate(165)"/><use href="#pMid" transform="rotate(195)"/><use href="#pMid" transform="rotate(225)"/><use href="#pMid" transform="rotate(255)"/><use href="#pMid" transform="rotate(285)"/><use href="#pMid" transform="rotate(315)"/><use href="#pMid" transform="rotate(345)"/><use href="#pBig" transform="rotate(0)"/><use href="#pBig" transform="rotate(45)"/><use href="#pBig" transform="rotate(90)"/><use href="#pBig" transform="rotate(135)"/><use href="#pBig" transform="rotate(180)"/><use href="#pBig" transform="rotate(225)"/><use href="#pBig" transform="rotate(270)"/><use href="#pBig" transform="rotate(315)"/>
+<g fill="currentColor" stroke="none"><use href="#dot" transform="rotate(5)"/><use href="#dot" transform="rotate(15)"/><use href="#dot" transform="rotate(25)"/><use href="#dot" transform="rotate(35)"/><use href="#dot" transform="rotate(45)"/><use href="#dot" transform="rotate(55)"/><use href="#dot" transform="rotate(65)"/><use href="#dot" transform="rotate(75)"/><use href="#dot" transform="rotate(85)"/><use href="#dot" transform="rotate(95)"/><use href="#dot" transform="rotate(105)"/><use href="#dot" transform="rotate(115)"/><use href="#dot" transform="rotate(125)"/><use href="#dot" transform="rotate(135)"/><use href="#dot" transform="rotate(145)"/><use href="#dot" transform="rotate(155)"/><use href="#dot" transform="rotate(165)"/><use href="#dot" transform="rotate(175)"/><use href="#dot" transform="rotate(185)"/><use href="#dot" transform="rotate(195)"/><use href="#dot" transform="rotate(205)"/><use href="#dot" transform="rotate(215)"/><use href="#dot" transform="rotate(225)"/><use href="#dot" transform="rotate(235)"/><use href="#dot" transform="rotate(245)"/><use href="#dot" transform="rotate(255)"/><use href="#dot" transform="rotate(265)"/><use href="#dot" transform="rotate(275)"/><use href="#dot" transform="rotate(285)"/><use href="#dot" transform="rotate(295)"/><use href="#dot" transform="rotate(305)"/><use href="#dot" transform="rotate(315)"/><use href="#dot" transform="rotate(325)"/><use href="#dot" transform="rotate(335)"/><use href="#dot" transform="rotate(345)"/><use href="#dot" transform="rotate(355)"/></g>
+</g></symbol></defs></svg>
+<svg class="mandala m-bg1" aria-hidden="true"><use href="#mandala"/></svg>
+<svg class="mandala m-bg2" aria-hidden="true"><use href="#mandala"/></svg>
+
+<header class="hero">
+  <svg class="mandala m-hero" aria-hidden="true"><use href="#mandala"/></svg>
+  <svg class="mandala m-hero2" aria-hidden="true"><use href="#mandala"/></svg>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg><use href="#mandala"/></svg></div>
+      <div>
+        <h1><span class="t-bold">Korvai</span> <span class="t-light">Studio</span></h1>
+        <p class="eyebrow tagline">Let's Make Some Taal-culation!</p>
+      </div>
+    </div>
+    <div class="hero-right">
+      <svg class="hero-bars" viewBox="0 0 240 100" role="img" aria-label="Rhythm bars: rising Poorvangam, patterned Madhyangam, steady Uttarangam">
+        <rect x="8" y="68" width="12" height="22" rx="3" fill="#6c9bff"/><rect x="26" y="60" width="12" height="30" rx="3" fill="#6c9bff"/><rect x="44" y="52" width="12" height="38" rx="3" fill="#6c9bff"/><rect x="62" y="44" width="12" height="46" rx="3" fill="#6c9bff"/>
+        <rect x="86" y="56" width="12" height="34" rx="3" fill="#2dd4bf"/><rect x="104" y="42" width="12" height="48" rx="3" fill="#2dd4bf"/><rect x="122" y="56" width="12" height="34" rx="3" fill="#2dd4bf"/><rect x="140" y="56" width="12" height="34" rx="3" fill="#2dd4bf"/><rect x="158" y="56" width="12" height="34" rx="3" fill="#2dd4bf"/>
+        <rect x="182" y="34" width="12" height="56" rx="3" fill="#fbbf24"/><rect x="200" y="34" width="12" height="56" rx="3" fill="#fbbf24"/><rect x="218" y="34" width="12" height="56" rx="3" fill="#fbbf24"/>
+      </svg>
+    <nav class="flow" aria-label="Workflow">
+      <a href="#decoder"><b>1</b>Decode matras</a>
+      <span class="arrow" aria-hidden="true">→</span>
+      <a href="#genCard"><b>2</b>Generate korvai</a>
+    </nav>
+    <button type="button" class="signout" id="signout">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ================= Decoder ================= -->
+  <section class="card" id="decoder">
+    <div class="card-head"><span class="step">1</span><h2>Matra Count Decoder</h2></div>
+    <p class="intro">Pick a thala from the common list, or build one from Thalam, Jaathi and Gathi, then enter the nadai and the eduppu.  In case of multiple nadai, separate them with "-" as shown. Eg: 4-5-6, or 4-66-888 etc.</p>
+
+    <div class="seg" role="radiogroup" aria-label="How to choose the thalam">
+      <label><input type="radio" name="mode" value="quick" checked><span>Common thalas</span></label>
+      <label><input type="radio" name="mode" value="build"><span>Build from Thalam · Jaathi · Gathi</span></label>
+    </div>
+
+    <div class="grid">
+      <div id="quickWrap" class="full">
+        <label class="lbl" for="quick">Thalam</label>
+        <select id="quick">
+          <option value="8">Adi Thalam (8 beats)</option>
+          <option value="16">Adi Thalam (16 beats)</option>
+          <option value="3.5">Mishra Chapu (3.5 beats)</option>
+          <option value="2.5">Khanda Chapu (2.5 beats)</option>
+          <option value="3">Rupakam (3 beats)</option>
+          <option value="9">Khanda Triputa (9 beats)</option>
+        </select>
+      </div>
+      <div id="thalamWrap" class="third" hidden>
+        <label class="lbl" for="thalam">Thalam</label>
+        <select id="thalam">
+          <option value="eka">Eka Thalam</option>
+          <option value="triputa" selected>Triputa Thalam</option>
+          <option value="rupaka">Rupaka Thalam</option>
+          <option value="atta">Atta Thalam</option>
+          <option value="mattya">Mattya Thalam</option>
+          <option value="jhampa">Jhampa Thalam</option>
+          <option value="dhruva">Dhruva Thalam</option>
+        </select>
+      </div>
+      <div id="jaathiWrap" class="third" hidden>
+        <label class="lbl" for="jaathi">Jaathi</label>
+        <select id="jaathi">
+          <option value="3">Tishra Jaathi</option>
+          <option value="4" selected>Chatushra Jaathi</option>
+          <option value="5">Khanda Jaathi</option>
+          <option value="7">Mishra Jaathi</option>
+          <option value="9">Sankeerna Jaathi</option>
+        </select>
+      </div>
+      <div id="gathiWrap" class="third" hidden>
+        <label class="lbl" for="gathi">Gathi</label>
+        <select id="gathi">
+          <option value="3">Tishra Gathi</option>
+          <option value="4" selected>Chatushra Gathi</option>
+          <option value="5">Khanda Gathi</option>
+          <option value="7">Mishra Gathi</option>
+          <option value="9">Sankeerna Gathi</option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl" for="eduppu">Eduppu (maatras, Chatusra)</label>
+        <input id="eduppu" type="text" inputmode="numeric" value="0" placeholder="e.g. 0">
+        <div class="hint">0 = Samam</div>
+      </div>
+      <div>
+        <label class="lbl" for="nadai">Nadai</label>
+        <input id="nadai" type="text" value="4" placeholder="e.g. 4 or 4-66-888">
+        <div class="chips">
+          <span class="hint">Try:</span>
+          <button type="button" class="chip" data-nadai="4">4</button>
+          <button type="button" class="chip" data-nadai="4-5-6">4-5-6</button>
+          <button type="button" class="chip" data-nadai="4-66-888">4-66-888</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="calculate">Calculate</button>
+      <span class="error" id="error" role="alert"></span>
+      <span class="status" id="calcStatus" role="status"></span>
+    </div>
+
+    <div class="results" id="results" aria-live="polite">
+      <h3>Korvai Maatra Results</h3>
+      <p class="result-intro" id="resultIntro"></p>
+      <p class="result-intro" id="resultNote"></p>
+      <div class="gen-count" id="decCount" role="status"></div>
+      <div class="answer-grid" id="answerGrid"></div>
+      <div class="gen-nav" id="decNav">
+        <span class="page-info" id="decPageInfo"></span>
+        <div class="nav-btns">
+          <button type="button" class="nav-btn" id="decPrev">← Previous 6</button>
+          <button type="button" class="nav-btn next" id="decNext">Next 6 →</button>
+        </div>
+      </div>
+      <div class="select-bar" id="selectBar">
+        <span class="hint">Click a value to send it to the Korvai Generator.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Generator ================= -->
+  <section class="card" id="genCard">
+    <div class="card-head"><span class="step">2</span><h2>Korvai Generator</h2></div>
+    <p class="intro">Enter the total maatras of the korvai, or select a result in the Matra Count Decoder to bring it here.</p>
+
+    <div class="gen-input">
+      <div>
+        <label class="lbl" for="genTotal" id="genTotalLabel">Total maatras</label>
+        <input id="genTotal" type="text" inputmode="numeric" placeholder="e.g. 96">
+      </div>
+      <button class="primary" id="generate" type="button">Generate Korvai</button>
+    </div>
+    <div class="actions" style="margin-top:10px"><span class="error" id="genError" role="alert"></span></div>
+
+    <div class="results" id="genResults" aria-live="polite">
+      <h3>Korvai Patterns</h3>
+      <p class="result-intro" id="genIntro"></p>
+      <div class="gen-count" id="genCount" role="status"></div>
+      <div class="legend">
+        <span class="korvai-p">Poorvangam</span>
+        <span class="korvai-m" id="legendM">Madhyangam (in some korvais)</span>
+        <span class="korvai-u">Uttarangam</span>
+      </div>
+      <div class="korvai-list" id="genList"></div>
+      <div class="gen-nav" id="genNav">
+        <span class="page-info" id="pageInfo"></span>
+        <div class="nav-btns">
+          <button type="button" class="nav-btn" id="prevPage">← Previous 5</button>
+          <button type="button" class="nav-btn next" id="nextPage">Next 5 →</button>
+        </div>
+      </div>
+      <p class="gen-tip" id="genTip">Tip: click <b>Generate Korvai</b> again to draw a completely fresh set of korvais.</p>
+    </div>
+    <div class="empty">
+      <svg aria-hidden="true"><use href="#mandala"/></svg>
+      <div>Your korvai patterns will appear here.</div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= Reference notes ================= -->
+<div class="notes">
+  <details>
+    <summary>Nadai reference</summary>
+    <p>1 = 1 maatra per beat, 2 = 2, 3 = 3 (Tishra), 4 = 4 (Chatustra), 5 = 5 (Khanda),
+      6 = 6 (Tishra Melkalam), 7 = 7 (Mishra), 8 = 8 (Chatushra Melkalam), 9 = 9 (Sankeerna),
+      10 = 10 maatras per beat.</p>
+  </details>
+  <details>
+    <summary>How the Korvai Generator builds patterns</summary>
+    <p>
+      Pattern: P1 (k1) P2 (k1) P3 (k1) P4 (k1) + U1 (k2) U2 (k2) U3 = total maatras. Every Poorvangam part is followed by k1.
+      Poorvangam (P) has 3 to 5 parts that follow a Shrothovaha (rising) or Gopuccha (falling) Yati, or are equal;
+      neighbouring parts differ by at most 6. Uttarangam (U) has 3 parts written with the digits 5 to 10:
+      a part such as 15 is written 555 (5 × 3). Karvai k1 is 0 or between 2 and 12, k2 is between 0 and 12.
+      About 1 in 10 korvais adds a Madhyangam between P and U: a series (5 to 10) repeated with x reducing,
+      for example series 5 with x = 3, 2 gives 3 3 3 3 3 + 2 2 2 2 2. Its Uttarangam must start with the series number,
+      and the Poorvangam can be absent. P and U are never equal. Every click on Generate Korvai gives a fresh set.
+    </p>
+    <p>
+      Asymmetric korvais are used when the thalam's beats are divisible by 3 but the Eduppu is not (for example Rupakam with Eduppu 2),
+      because three identical repetitions cannot land on Samam. The Uttarangam is the same in all three repetitions, while the
+      Poorvangam follows a Gopuccha series 4d, 3d, 2d, d, 0 with k1 (2 to 12) after every part: repetition 1 plays the first 3 parts,
+      repetition 2 the first 4 and repetition 3 all 5 (the last is a bare k1). The grand total of the three repetitions equals whole cycles
+      plus the Eduppu, for example Rupakam with Eduppu 2: 98 = 30 + 33 + 35.
+    </p>
+  </details>
+</div>
+
+<footer>
+  <div>Credits: Prithvi Krishna | Narasimha Prasad</div>
+  <div>Copyrights &copy; 2026</div>
+</footer>
+
+<script>
+document.getElementById('signout').addEventListener('click', () => {
+  try { sessionStorage.removeItem('korvaiAuth'); } catch (e) {}
+  location.href = 'login.html';
+});
+</script>
+<script>
+const RESULT_COUNT = 6;
+const DEC_PAGE = 6;    // decoder values shown per page
+const DEC_CAP = 60;    // most decoder values collected per Calculate
+let decState = {answers: [], page: 0, capped: false};
+let autoTotals = null;
+let genAsym = false;   // true while the generator shows asymmetric korvais   // set when the decoder sends asymmetric korvais straight to the generator
+const MAX_CYCLES = 1000;
+const MAX_LENGTH = 300;   // single-nadai results must be below this
+const MAX_SEQ_X = 3000;   // largest x searched for a nadai sequence
+
+function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
+function lcm(a, b) { return Math.abs(a * b) / gcd(a, b); }
+
+function fmt(n) {
+  return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+}
+
+// "4-66-888" -> [{nadai:4,count:1},{nadai:6,count:2},{nadai:8,count:3}]
+// A segment of repeated digits (66) means that many plays at that nadai.
+function parseNadaiSequence(value) {
+  const parts = value.split('-').map(p => p.replace(/\s+/g, ''));
+  const pattern = /^(?:([1-9])\1*|(?:10)+)$/;   // 66 = nadai 6 twice, 1010 = nadai 10 twice
+  if (parts.length < 2 || parts.some(p => !pattern.test(p))) return null;
+  return parts.map(p => p.startsWith('10')
+    ? {nadai: 10, count: p.length / 2}
+    : {nadai: Number(p[0]), count: p.length});
+}
+
+function addCard(grid, index, title, detail, value, asym) {
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.className = 'answer-card';
+  card.setAttribute('aria-pressed', 'false');
+  const label = document.createElement('span');
+  label.className = 'number';
+  label.textContent = `Value ${index + 1}`;
+  const strong = document.createElement('strong');
+  strong.textContent = title;
+  const small = document.createElement('span');
+  small.className = 'detail';
+  small.textContent = detail;
+  card.append(label, strong);
+  if (detail) card.append(small);
+  card.addEventListener('click', () => selectResult(card, value, asym));
+  grid.appendChild(card);
+}
+
+function calculateResults() {
+  const selText = id => { const s = document.getElementById(id); return s.options[s.selectedIndex].text; };
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  let beats, thalamText;
+  if (mode === 'quick') {
+    beats = Number(document.getElementById('quick').value);
+    thalamText = selText('quick');
+  } else {
+    // Thalam beats from Thalam + Jaathi (j = laghu count), then Gathi: each beat holds g/2 beats.
+    const j = Number(document.getElementById('jaathi').value);
+    const g = Number(document.getElementById('gathi').value);
+    const thalamBeats = {eka: j, triputa: j + 4, rupaka: j + 2, atta: 2 * j + 4,
+                         mattya: 2 * j + 2, jhampa: j + 3, dhruva: 3 * j + 2}[document.getElementById('thalam').value];
+    beats = thalamBeats * g / 2;
+    thalamText = `${selText('thalam')} · ${selText('jaathi')} · ${selText('gathi')} · ${fmt(beats)} beats`;
+  }
+  const eduppuRaw = document.getElementById('eduppu').value.trim();
+  const eduppu = Number(eduppuRaw);
+  const nadaiText = document.getElementById('nadai').value.trim();
+  const error = document.getElementById('error');
+  const results = document.getElementById('results');
+  const answerGrid = document.getElementById('answerGrid');
+  const beats2 = Math.round(beats * 2);   // 2 x beats, always an integer
+
+  error.textContent = '';
+  results.style.display = 'none';
+  answerGrid.innerHTML = '';
+  document.getElementById('resultNote').textContent = '';
+  document.getElementById('calcStatus').textContent = '';
+  autoTotals = null;
+  document.getElementById('selectBar').style.display = 'none';
+  document.getElementById('decCount').textContent = '';
+  document.getElementById('decNav').style.display = 'none';
+  clearSelection();
+
+  if (eduppuRaw === '' || !Number.isInteger(eduppu)) {
+    error.textContent = 'Enter Eduppu as a whole number of maatras. Use 0 for Samam.';
+    return;
+  }
+
+  const eduppuText = eduppu === 0 ? 'Samam (0)' : eduppu;
+  const answers = [];
+
+  if (/^([1-9]|10)$/.test(nadaiText)) {
+    // Single nadai: N x cycle maatras + Eduppu must be divisible by 3.
+    // Eduppu is always counted in Chatusra nadai (4 maatras per beat): 2 = 1/2 beat.
+    const nadai = Number(nadaiText);
+    for (let k = 1; k <= MAX_CYCLES && answers.length < DEC_CAP; k++) {
+      // total maatras x 4 = nadai x (2 x beats2 x k + eduppu), kept as an integer
+      const total4 = nadai * (2 * beats2 * k + eduppu);
+      if (total4 <= 0 || total4 % 12 !== 0) continue;   // whole maatras, divisible by 3
+      const length = total4 / 12;
+      if (length >= MAX_LENGTH) break;
+      answers.push({
+        title: `${fmt(length)} matras`,
+        value: length
+      });
+    }
+    document.getElementById('resultIntro').textContent =
+      `${thalamText} · Nadai: ${nadai} · Eduppu: ${eduppuText}`;
+    // Thalam divisible by 3 but Eduppu is not: three identical repetitions cannot end on Samam.
+    if (!answers.length && Number.isInteger(beats) && beats % 3 === 0 && eduppu % 3 !== 0) {
+      const totals = asymmetricTotals(beats2, nadai, eduppu);
+      if (totals.length) {
+        // No matra counts here: the asymmetric korvais are generated directly in the Korvai Generator.
+        showAsymDirect(totals, `${thalamText} · Nadai: ${nadai} · Eduppu: ${eduppuText}`);
+        return;
+      }
+    }
+  } else {
+    // Nadai sequence such as 4-66-888.
+    const groups = parseNadaiSequence(nadaiText);
+    if (!groups) {
+      error.textContent = 'Enter one nadai (1 to 10) or a sequence such as 4-66-888, 4-6-8, 4-55-666 or 4-5-6.';
+      return;
+    }
+    // Every part must end on a whole maatra and on a quarter-beat boundary (0, 1/4, 1/2, 3/4 or a full beat).
+    // In nadai n one beat has n maatras, so x maatras = x/n beats = 4x/n quarter-beats, which must be whole.
+    const step = groups.reduce((v, g) => lcm(v, g.nadai / gcd(g.nadai, 4)), 1);
+    for (let x = step; x <= MAX_SEQ_X && answers.length < DEC_CAP; x += step) {
+      // Work in quarter-beats so everything stays an exact integer.
+      const totalQ = groups.reduce((sum, g) => sum + g.count * (4 * x / g.nadai), 0);
+      // Eduppu is always in Chatusra nadai (4 maatras per beat), so Eduppu maatras = Eduppu quarter-beats.
+      // S = total beats - Eduppu must be a positive multiple of the thalam's beats.
+      const num = totalQ - eduppu;                       // = 4 x S
+      if (num <= 0 || num % (2 * beats2) !== 0) continue;
+      answers.push({
+        title: `${x} matras`,
+        value: x
+      });
+    }
+    document.getElementById('resultIntro').textContent =
+      `${thalamText} · Nadai: ${nadaiText.replace(/\s+/g, '')} · Eduppu: ${eduppuText}`;
+  }
+
+  if (!answers.length) {
+    // Beats divisible by 3 but Eduppu not: a korvai played three times cannot end on Samam.
+    error.textContent = (!/^([1-9]|10)$/.test(nadaiText) && Number.isInteger(beats) && beats % 3 === 0 && eduppu % 3 !== 0)
+      ? 'Asymmetric korvais are available for a single nadai only. Try a single nadai such as 4.'
+      : 'No valid value found. Check the thalam, nadai and Eduppu.';
+    results.style.display = 'block';
+    return;
+  }
+  decState = {answers, page: 0, capped: answers.length >= DEC_CAP};
+  renderDecoderPage();
+  document.getElementById('selectBar').style.display = 'flex';
+  results.style.display = 'block';
+}
+
+function renderDecoderPage() {
+  const {answers, page, capped} = decState;
+  const grid = document.getElementById('answerGrid');
+  grid.innerHTML = '';
+  clearSelection();
+  const start = page * DEC_PAGE;
+  const slice = answers.slice(start, start + DEC_PAGE);
+  slice.forEach((a, i) => addCard(grid, start + i, a.title, a.detail, a.value, a.asym));
+  const pages = Math.ceil(answers.length / DEC_PAGE);
+  const n = answers.length;
+  document.getElementById('decCount').textContent = pages > 1
+    ? `${capped ? 'First ' : ''}${n} valid matra counts found${capped ? ' (more exist)' : ''}. Showing ${start + 1}\u2013${start + slice.length}. Use Next below to see the rest.`
+    : `${n} valid matra count${n === 1 ? '' : 's'} found. Showing all of them.`;
+  document.getElementById('decNav').style.display = pages > 1 ? 'flex' : 'none';
+  document.getElementById('decPageInfo').textContent = `Page ${page + 1} of ${pages}`;
+  document.getElementById('decPrev').disabled = page === 0;
+  document.getElementById('decNext').disabled = page >= pages - 1;
+  document.getElementById('decNext').textContent = page >= pages - 1 ? 'Last page' : `Next ${DEC_PAGE} \u2192`;
+}
+document.getElementById('decPrev').addEventListener('click', () => { decState.page--; renderDecoderPage(); });
+document.getElementById('decNext').addEventListener('click', () => { decState.page++; renderDecoderPage(); });
+
+document.getElementById('calculate').addEventListener('click', calculateResults);
+['eduppu', 'nadai'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') calculateResults(); }));
+
+// Example chips fill the nadai field.
+document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => {
+  const input = document.getElementById('nadai');
+  input.value = chip.dataset.nadai;
+  input.dispatchEvent(new Event('input'));
+  input.focus();
+}));
+
+// Results appear only when Calculate is clicked; changing an input clears old results.
+function resetResults() {
+  document.getElementById('calcStatus').textContent = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('error').textContent = '';
+  document.getElementById('selectBar').style.display = 'none';
+  document.getElementById('decCount').textContent = '';
+  document.getElementById('decNav').style.display = 'none';
+  clearSelection();
+}
+['quick', 'thalam', 'jaathi', 'gathi', 'eduppu', 'nadai'].forEach(id =>
+  document.getElementById(id).addEventListener('input', resetResults));
+document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener('change', () => {
+  const build = document.querySelector('input[name="mode"]:checked').value === 'build';
+  document.getElementById('quickWrap').hidden = build;
+  ['thalamWrap', 'jaathiWrap', 'gathiWrap'].forEach(id => { document.getElementById(id).hidden = !build; });
+  resetResults();
+}));
+
+// ---------- Selecting a decoder result and sending it to the generator ----------
+let selectedCard = null;
+function clearSelection() {
+  if (selectedCard) {
+    selectedCard.classList.remove('selected');
+    selectedCard.setAttribute('aria-pressed', 'false');
+  }
+  selectedCard = null;
+}
+function selectResult(card, value, asym) {
+  clearSelection();
+  selectedCard = card;
+  card.classList.add('selected');
+  card.setAttribute('aria-pressed', 'true');
+  // Feed the generator automatically.
+  document.getElementById('genTotal').value = value;
+  setGenMode(asym ? 'asym' : 'sym');
+  document.getElementById('genError').textContent = '';
+  document.getElementById('genResults').style.display = 'none';
+  // Take the person to the generator right away.
+  const gen = document.getElementById('genCard');
+  gen.scrollIntoView({behavior: 'smooth', block: 'start'});
+  gen.classList.add('flash');
+  setTimeout(() => gen.classList.remove('flash'), 1200);
+  document.getElementById('genTotal').focus({preventScroll: true});
+}
+
+// ---------- Korvai Generator ----------
+// P1 (k1) P2 (k1) ... Pn (k1) + U1 (k2) U2 (k2) U3 = total maatras
+const GEN_VARIANTS = 5;                              // korvais shown per click
+const MADHYANGAM_EVERY = 10;                         // every 10th korvai shown (10%) uses a Madhyangam, when one fits
+const DIGITS = [5, 6, 7, 8, 9, 10];                  // digits used to write Uttarangam (display only)
+const U_CHANGES = [0, 1, 2];                         // small change between the digits of u1, u2, u3
+const KARVAI_P = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];   // k1 (Poorvangam): 0 or 2-12, 1 is skipped
+const KARVAI_U = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; // k2 (Uttarangam): 0 to 12
+const MIN_PART = 2;                                  // smallest Poorvangam part
+const MAX_P_DIFF = 6;                                // largest gap between neighbouring Poorvangam parts
+const YATI = {srotovaha: 'Shrothovaha Yati', gopuccha: 'Gopuccha Yati', equal: 'Equal parts'};
+
+// Madhyangam: a "series" (5 to 10) is a pattern of multiples of x that adds up to the series number.
+const SERIES = {
+  5: [1, 1, 1, 1, 1],
+  6: [1, 2, 1, 1, 1],
+  7: [2, 2, 1, 1, 1],
+  8: [1, 2, 1, 1, 1, 1, 1],
+  9: [2, 2, 1, 1, 1, 1, 1],
+  10: [3, 2, 1, 1, 1, 1, 1]
+};
+const M_GROUPS = [2, 3];        // how many x-groups the Madhyangam has
+const M_STEPS = [1, 2];         // x reduces by this much from group to group
+const M_X_MAX = 6;              // largest starting x
+const M_X_MIN = 2;              // x never goes below 2 (2 2 2 2 2 is the smallest group)
+
+function randInt(lo, hi) { return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// Uttarangam shapes: three parts, each a digit (5-10) repeated; the digits are only how a part is written.
+//   single : 9 (k2) 9 (k2) 9                    -> parts 9, 9, 9
+//   triple : 5 5 5 (k2) 6 6 6 (k2) 7 7 7        -> parts 15, 18, 21
+//   growing: 5 (k2) 5 5 (k2) 5 5 5              -> parts 5, 10, 15   (and the falling version)
+const U_OPTIONS = (() => {
+  const opts = [];
+  for (const reps of [1, 3]) {
+    for (const mid of DIGITS) {
+      for (const mag of U_CHANGES) {
+        for (const sign of (mag === 0 ? [1] : [1, -1])) {
+          const c = sign * mag;
+          const digits = [mid - c, mid, mid + c];
+          if (Math.min(...digits) < DIGITS[0] || Math.max(...digits) > DIGITS[DIGITS.length - 1]) continue;
+          opts.push({digits, reps: [reps, reps, reps], yati: c > 0 ? 'srotovaha' : c < 0 ? 'gopuccha' : 'equal'});
+        }
+      }
+    }
+  }
+  for (const d of DIGITS) {
+    opts.push({digits: [d, d, d], reps: [1, 2, 3], yati: 'srotovaha'});
+    opts.push({digits: [d, d, d], reps: [3, 2, 1], yati: 'gopuccha'});
+  }
+  return opts.map(o => ({...o, parts: o.digits.map((v, i) => v * o.reps[i])}));
+})();
+
+// Madhyangam options: e.g. series 5 with x = 4, 3, 2 -> (4 4 4 4 4) (3 3 3 3 3) (2 2 2 2 2) = 45 maatras
+const M_OPTIONS = (() => {
+  const out = [];
+  for (const series of Object.keys(SERIES).map(Number)) {
+    for (const g of M_GROUPS) {
+      for (const step of M_STEPS) {
+        for (let x0 = (g - 1) * step + M_X_MIN; x0 <= M_X_MAX; x0++) {
+          const xs = Array.from({length: g}, (_, i) => x0 - i * step);
+          out.push({series, xs, sum: series * xs.reduce((a, b) => a + b, 0)});
+        }
+      }
+    }
+  }
+  return out;
+})();
+
+// Keeps a random sample of GEN_VARIANTS items out of any number offered (reservoir sampling).
+const POOL_SIZE = 50;   // korvais kept per Generate click, browsed 5 at a time with Previous / Next
+function makePool() {
+  const items = [];
+  let count = 0;
+  return {
+    items,
+    get count() { return count; },
+    add(item) {
+      count++;
+      if (items.length < POOL_SIZE) items.push(item);
+      else { const j = randInt(0, count - 1); if (j < POOL_SIZE) items[j] = item; }
+    }
+  };
+}
+
+// Poorvangam: n parts (3 to 5) in an arithmetic progression, neighbouring parts differing by at most
+// MAX_P_DIFF (Shrothovaha = rising, Gopuccha = falling, or equal), each followed by k1.
+function enumerateP(pBlock, emit) {
+  for (let nP = 3; nP <= 5; nP++) {
+    const tri = nP * (nP - 1) / 2;
+    for (const k1 of KARVAI_P) {
+      const sumP = pBlock - nP * k1;
+      for (let d = 0; d <= MAX_P_DIFF && nP * MIN_PART + d * tri <= sumP; d++) {
+        const rem = sumP - d * tri;
+        if (rem % nP !== 0) continue;
+        const a = rem / nP;
+        const rising = Array.from({length: nP}, (_, i) => a + i * d);
+        for (const pYati of (d === 0 ? ['equal'] : ['srotovaha', 'gopuccha'])) {
+          emit({P: pYati === 'gopuccha' ? [...rising].reverse() : rising, k1, pYati});
+        }
+      }
+    }
+  }
+}
+
+let korvaiCounter = 0;   // korvais shown so far; every MADHYANGAM_EVERY-th one uses a Madhyangam
+function nextMadhyangamSlots() {
+  let n = 0;
+  for (let i = 0; i < GEN_VARIANTS; i++) { korvaiCounter++; if (korvaiCounter % MADHYANGAM_EVERY === 0) n++; }
+  return n;
+}
+
+function generateKorvais(L) {
+  const plain = makePool();   // Poorvangam + Uttarangam
+  const mid = makePool();     // Poorvangam (optional) + Madhyangam + Uttarangam
+
+  for (const uo of U_OPTIONS) {
+    const uSum = uo.parts[0] + uo.parts[1] + uo.parts[2];
+    for (const k2 of KARVAI_U) {
+      const uBlock = uSum + 2 * k2;
+      const pBlock = L - uBlock;
+      if (pBlock <= 0 || pBlock === uBlock) continue;         // P must not equal U
+      enumerateP(pBlock, p => plain.add({
+        ...p, uDigits: uo.digits, uReps: uo.reps, uParts: uo.parts, uYati: uo.yati, k2, pBlock, uBlock, m: null
+      }));
+    }
+  }
+
+  // With a Madhyangam, Uttarangam must start with the series number (series 5 -> Uttarangam starts with 5).
+  for (const mo of M_OPTIONS) {
+    for (const uo of U_OPTIONS) {
+      if (uo.digits[0] !== mo.series) continue;
+      const uSum = uo.parts[0] + uo.parts[1] + uo.parts[2];
+      for (const k2 of KARVAI_U) {
+        const uBlock = uSum + 2 * k2;
+        const pBlock = L - mo.sum - uBlock;                   // Poorvangam may be 0 (absent)
+        if (pBlock < 0 || pBlock === uBlock) continue;
+        const base = {uDigits: uo.digits, uReps: uo.reps, uParts: uo.parts, uYati: uo.yati, k2, pBlock, uBlock, m: mo};
+        if (pBlock === 0) mid.add({...base, P: [], k1: null, pYati: null});
+        else enumerateP(pBlock, p => mid.add({...base, ...p}));
+      }
+    }
+  }
+
+  // Madhyangam korvais take the slots that fall on every MADHYANGAM_EVERY-th korvai; the rest are plain.
+  const pp = shuffle([...plain.items]);
+  const mm = shuffle([...mid.items]);
+  const out = [];
+  const size = Math.min(POOL_SIZE, pp.length + mm.length);
+  for (let i = 0; i < size; i++) {
+    const wantM = (i + 1) % MADHYANGAM_EVERY === 0;
+    if ((wantM && mm.length) || !pp.length) out.push(mm.pop());
+    else out.push(pp.pop());
+  }
+  return {items: out, total: plain.count + mid.count};
+}
+
+// A part written as a digit repeated r times: 5 x 3 -> "555" (10 is written "10 10 10").
+function writeDigit(d, r) { return d === 10 ? Array(r).fill('10').join(' ') : String(d).repeat(r); }
+
+function korvaiParts(kv) {
+  const p = kv.P.map(v => `${v} (${kv.k1})`).join(' ');
+  const m = kv.m ? kv.m.xs.map(x => SERIES[kv.m.series].map(w => w * x).join(' ')).join(' + ') : '';
+  const [a, b, c] = kv.uDigits.map((d, i) => writeDigit(d, kv.uReps[i]));
+  const u = `${a} (${kv.k2}) ${b} (${kv.k2}) ${c}`;
+  return {p, m, u};
+}
+
+// ---------- Asymmetric korvais ----------
+// Uttarangam is the same in all three repetitions. Poorvangam follows the Gopuccha series 4d, 3d, 2d, d, 0
+// (each followed by k1): repetition 1 plays 3 terms, repetition 2 plays 4, repetition 3 plays all 5.
+// Sum of the three Poorvangams = 29d + 12 k1, so grand total = 29d + 12 k1 + 3 U.
+const ASYM_STEPS = [1, 2, 3, 4, 5, 6];
+const ASYM_K1 = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];   // k1 must be at least 2 so the last bare k1 is a real step
+function asymTotal(d, k1, uBlock) { return 29 * d + 12 * k1 + 3 * uBlock; }
+function forEachAsym(fn) {
+  for (const d of ASYM_STEPS) for (const k1 of ASYM_K1) for (const uo of U_OPTIONS) {
+    const uSum = uo.parts[0] + uo.parts[1] + uo.parts[2];
+    for (const k2 of KARVAI_U) fn(d, k1, uo, k2, uSum + 2 * k2);
+  }
+}
+const ASYM_TOTALS = (() => { const s = new Set(); forEachAsym((d, k1, uo, k2, u) => s.add(asymTotal(d, k1, u))); return s; })();
+
+// Grand totals (maatras) that land on Samam + Eduppu after cycles, and for which an asymmetric korvai exists.
+function asymmetricTotals(beats2, nadai, eduppu) {
+  const out = [];
+  for (let k = 1; k <= MAX_CYCLES && out.length < RESULT_COUNT; k++) {
+    const total4 = nadai * (2 * beats2 * k + eduppu);
+    if (total4 <= 0 || total4 % 4 !== 0) continue;
+    const t = total4 / 4;
+    if (t >= 3 * MAX_LENGTH) break;
+    if (ASYM_TOTALS.has(t)) out.push(t);
+  }
+  return out;
+}
+function generateAsym(L) {
+  const pool = makePool();
+  forEachAsym((d, k1, uo, k2, u) => { if (asymTotal(d, k1, u) === L) pool.add({d, k1, k2, uo, uBlock: u}); });
+  return {items: shuffle(pool.items), total: pool.count};
+}
+function asymReps(a) {
+  const terms = [4 * a.d, 3 * a.d, 2 * a.d, a.d, 0];
+  const [x, y, z] = a.uo.digits.map((dg, i) => writeDigit(dg, a.uo.reps[i]));
+  const u = `${x} (${a.k2}) ${y} (${a.k2}) ${z}`;
+  return [3, 4, 5].map(n => {
+    const used = terms.slice(0, n);
+    return {
+      p: used.map(v => v ? `${v} (${a.k1})` : `(${a.k1})`).join(' '),
+      u,
+      total: used.reduce((sum, v) => sum + v, 0) + n * a.k1 + a.uBlock
+    };
+  });
+}
+function renderAsym(a, i) {
+  const reps = asymReps(a);
+  const card = document.createElement('div');
+  card.className = 'korvai-card';
+  const top = document.createElement('div');
+  top.className = 'korvai-top';
+  const label = document.createElement('span');
+  label.className = 'number';
+  label.textContent = `Asymmetric korvai ${i + 1} · ${reps.map(r => r.total).join(' + ')} = ${reps.reduce((sum, r) => sum + r.total, 0)}`;
+  const copy = document.createElement('button');
+  copy.type = 'button';
+  copy.className = 'copy';
+  copy.textContent = 'Copy';
+  copy.addEventListener('click', () => {
+    const text = reps.map((r, j) => `${j + 1}: ${r.p} + ${r.u}`).join('\n');
+    const done = () => { copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy'; }, 1200); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => {});
+  });
+  top.append(label, copy);
+  card.append(top);
+  reps.forEach((r, j) => {
+    const row = document.createElement('div');
+    row.className = 'rep';
+    const n = document.createElement('span');
+    n.className = 'rep-n';
+    n.textContent = j + 1;
+    const line = document.createElement('div');
+    line.className = 'korvai-line';
+    const p = document.createElement('span');
+    p.className = 'korvai-p';
+    p.textContent = r.p;
+    const plus = document.createElement('span');
+    plus.className = 'korvai-plus';
+    plus.textContent = ' + ';
+    const u = document.createElement('span');
+    u.className = 'korvai-u';
+    u.textContent = r.u;
+    line.append(p, plus, u);
+    const tot = document.createElement('span');
+    tot.className = 'rep-tot';
+    tot.textContent = r.total;
+    row.append(n, line, tot);
+    card.append(row);
+  });
+  return card;
+}
+
+// Generator mode: symmetric (same korvai played three times) or asymmetric (grows each repetition).
+function applyGenMode() {
+  const asym = genAsym;
+  document.getElementById('genTotalLabel').textContent = asym ? 'Grand total maatras (all 3 repetitions)' : 'Total maatras';
+  document.getElementById('genTotal').placeholder = asym ? (autoTotals ? 'Auto (from the decoder)' : 'e.g. 98') : 'e.g. 96';
+  document.getElementById('legendM').hidden = asym;
+}
+function setGenMode(mode) {
+  genAsym = mode === 'asym';
+  applyGenMode();
+}
+// Typing a total by hand always means a normal (symmetric) korvai.
+document.getElementById('genTotal').addEventListener('input', () => {
+  autoTotals = null;
+  setGenMode('sym');
+});
+
+// Asymmetric korvais sent straight from the decoder: mix korvais drawn from every valid grand total.
+function showAsymDirect(totals, intro) {
+  autoTotals = {totals, intro};
+  setGenMode('asym');
+  document.getElementById('genTotal').value = '';
+  applyGenMode();
+  document.getElementById('calcStatus').textContent = 'Asymmetric korvais are ready in the Korvai Generator.';
+  generate();
+  const card = document.getElementById('genCard');
+  if (window.matchMedia && window.matchMedia('(max-width: 980px)').matches) card.scrollIntoView({behavior: 'smooth', block: 'start'});
+  card.classList.add('flash');
+  setTimeout(() => card.classList.remove('flash'), 1200);
+}
+function generateAuto() {
+  const all = [];
+  let total = 0;
+  autoTotals.totals.forEach(L => { const r = generateAsym(L); r.items.forEach(k => all.push(k)); total += r.total; });
+  const korvais = shuffle(all).slice(0, POOL_SIZE);
+  const error = document.getElementById('genError');
+  if (!korvais.length) { error.textContent = 'No asymmetric korvai found for this thalam and Eduppu.'; return; }
+  document.getElementById('genIntro').textContent = `${autoTotals.intro} · Asymmetric korvais (grand totals ${autoTotals.totals.join(', ')} maatras)`;
+  showPages(korvais, total, true);
+}
+
+// ---------- Paging: results are shown PAGE_SIZE at a time ----------
+const PAGE_SIZE = GEN_VARIANTS;
+let pageState = {items: [], total: 0, page: 0, asym: false};
+function showPages(items, total, asym) {
+  pageState = {items, total, page: 0, asym};
+  renderPage();
+  document.getElementById('genResults').style.display = 'block';
+}
+function renderPage() {
+  const {items, total, page, asym} = pageState;
+  const list = document.getElementById('genList');
+  list.innerHTML = '';
+  const start = page * PAGE_SIZE;
+  const slice = items.slice(start, start + PAGE_SIZE);
+  slice.forEach((kv, i) => list.appendChild(asym ? renderAsym(kv, start + i) : renderKorvai(kv, start + i)));
+  const pages = Math.ceil(items.length / PAGE_SIZE);
+  const noun = asym ? 'asymmetric korvais' : 'korvais';
+  const sampled = total > items.length;
+  document.getElementById('genCount').textContent = sampled
+    ? `${total.toLocaleString()} ${noun} possible for this total. ${items.length} random ones are ready to browse, ${PAGE_SIZE} per page. Showing ${start + 1}–${start + slice.length}.`
+    : `${items.length} ${noun} found for this total. Showing ${start + 1}–${start + slice.length}.`;
+  const nav = document.getElementById('genNav');
+  nav.style.display = pages > 1 ? 'flex' : 'none';
+  document.getElementById('genTip').style.display = pages > 0 ? 'block' : 'none';
+  document.getElementById('pageInfo').textContent = `Page ${page + 1} of ${pages}`;
+  document.getElementById('prevPage').disabled = page === 0;
+  document.getElementById('nextPage').disabled = page >= pages - 1;
+  document.getElementById('nextPage').textContent = page >= pages - 1 ? 'Last page' : `Next ${PAGE_SIZE} →`;
+}
+function goPage(delta) {
+  pageState.page += delta;
+  renderPage();
+  document.getElementById('genResults').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+document.getElementById('prevPage').addEventListener('click', () => goPage(-1));
+document.getElementById('nextPage').addEventListener('click', () => goPage(1));
+
+document.getElementById('generate').addEventListener('click', generate);
+document.getElementById('genTotal').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+
+function generate() {
+  const error = document.getElementById('genError');
+  const results = document.getElementById('genResults');
+  const list = document.getElementById('genList');
+  error.textContent = '';
+  results.style.display = 'none';
+  list.innerHTML = '';
+
+  const totalRaw = document.getElementById('genTotal').value.trim();
+  if (totalRaw === '' && autoTotals && genAsym) { generateAuto(); return; }
+  const L = Number(totalRaw);
+  if (totalRaw === '' || !Number.isInteger(L) || L < 1) {
+    error.textContent = 'Enter the total maatras as a whole number.';
+    return;
+  }
+  const asym = genAsym;
+  const res = asym ? generateAsym(L) : generateKorvais(L);
+  if (!res.items.length) {
+    error.textContent = asym
+      ? 'No asymmetric korvai fits this grand total. Use a value from the Matra Count Decoder.'
+      : 'No korvai fits this total with the current rules. Try a different total.';
+    return;
+  }
+  document.getElementById('genIntro').textContent = asym ? `Grand total: ${L} maatras (3 repetitions)` : `Total: ${L} maatras`;
+  showPages(res.items, res.total, asym);
+}
+
+function renderKorvai(kv, i) {
+    const card = document.createElement('div');
+    card.className = 'korvai-card';
+
+    const top = document.createElement('div');
+    top.className = 'korvai-top';
+    const label = document.createElement('span');
+    label.className = 'number';
+    label.textContent = `Korvai ${i + 1}${kv.m ? ' · with Madhyangam' : ''}`;
+
+    const parts = korvaiParts(kv);
+    const plainText = [parts.p, parts.m, parts.u].filter(Boolean).join(' + ');
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'copy';
+    copy.textContent = 'Copy';
+    copy.addEventListener('click', () => {
+      const done = () => { copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy'; }, 1200); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(plainText).then(done, () => {});
+    });
+    top.append(label, copy);
+
+    const line = document.createElement('div');
+    line.className = 'korvai-line';
+    [['korvai-p', parts.p], ['korvai-m', parts.m], ['korvai-u', parts.u]]
+      .filter(([, text]) => text)
+      .forEach(([cls, text], idx) => {
+        if (idx > 0) {
+          const plus = document.createElement('span');
+          plus.className = 'korvai-plus';
+          plus.textContent = ' + ';
+          line.append(plus);
+        }
+        const span = document.createElement('span');
+        span.className = cls;
+        span.textContent = text;
+        line.append(span);
+      });
+
+    card.append(top, line);
+    return card;
+}
+</script>
+</body>
+</html>
