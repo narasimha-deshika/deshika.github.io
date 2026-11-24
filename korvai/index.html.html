@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korvai Studio | Carnatic korvai tools for mridangam, kanjira and ghatam</title>
+<meta name="description" content="Calculate matra counts and generate korvais for mridangam, kanjira, ghatam and other Carnatic percussion.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;700;900&family=Tiro+Devanagari+Sanskrit&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0a1330;--navy2:#13235a;--blue:#2f5bea;--indigo:#5b4bdb;--teal:#0ea5a4;--amber:#f59e0b;
+  --bg:#eef2f9;--paper:#ffffff;--ink:#0f1b3d;--muted:#5d6b88;--line:#dde4f0;--soft:#f5f8fd;
+  --p:#2f5bea;--m:#0d9488;--u:#d97706;--err:#c62828;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:linear-gradient(180deg,#f1f4fb,#e7edf8);background-attachment:fixed;line-height:1.5;min-height:100vh}
+
+/* ---------- Mandala artwork ---------- */
+.mandala{position:absolute;pointer-events:none;color:currentColor;display:block}
+.m-hero{width:600px;height:600px;right:-110px;top:-225px;color:#8fb2ff;opacity:.34;}
+.m-hero2{width:360px;height:360px;left:-120px;bottom:-190px;color:#2dd4bf;opacity:.2}
+
+.m-bg1{position:fixed;width:560px;height:560px;left:-190px;bottom:-190px;color:var(--blue);opacity:.07;z-index:0}
+.m-bg2{position:fixed;width:460px;height:460px;right:-170px;top:42%;color:var(--teal);opacity:.07;z-index:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;overflow:hidden;z-index:0;color:#fff;padding:34px 0 96px;
+  background:radial-gradient(800px 380px at 88% -15%,#4a5df055,transparent 62%),radial-gradient(520px 280px at 8% 115%,#0ea5a438,transparent 60%),linear-gradient(135deg,var(--navy),var(--navy2))}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px;position:relative;z-index:1}
+.hero .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:18px}
+.logo{position:relative;flex:none;width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--blue),var(--teal));display:grid;place-items:center;box-shadow:0 10px 28px #2f5bea66,inset 0 0 0 1px #ffffff40}
+.logo svg{width:44px;height:44px;color:#fff}
+.eyebrow{font-size:11.5px;letter-spacing:2px;text-transform:uppercase;color:#7ee7de;font-weight:700;margin:0 0 4px}
+.hero h1{margin:0;font-family:Lato,Calibri,Carlito,'Segoe UI',system-ui,sans-serif;font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.2px;font-weight:300}
+.hero h1 .t-bold{font-weight:900}
+.hero .tagline{margin:8px 0 10px;font-family:Lato,Calibri,Carlito,'Segoe UI',system-ui,sans-serif;font-size:13px;color:#cfe0ff;font-weight:300}
+.tg-pun{white-space:nowrap}
+.tg-taal{color:#fbbf24;font-weight:900}
+.tg-cul{color:#7ee7de;font-weight:900}
+.hero-right{display:flex;flex-direction:column;align-items:flex-end;gap:16px}
+.hero-bars{display:block;width:min(240px,100%);height:auto}
+@media(max-width:620px){.hero-right{align-items:flex-start}.hero-bars{width:180px}}
+.hero p.sub{margin:6px 0 0;color:#c9d6f5;font-size:14.5px}
+.flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.flow a{display:flex;align-items:center;gap:9px;text-decoration:none;color:#e6edff;background:#ffffff14;border:1px solid #ffffff2a;backdrop-filter:blur(6px);padding:9px 16px 9px 10px;border-radius:999px;font-size:13.5px;font-weight:650;transition:.2s}
+.flow a:hover{background:#ffffff26;transform:translateY(-1px)}
+.flow b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--teal));font-size:12px}
+.flow .arrow{color:#7f93c9}
+
+/* ---------- Layout ---------- */
+main{position:relative;z-index:2;max-width:1180px;margin:-62px auto 0;padding:0 22px 28px;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:22px;align-items:stretch}
+.card{position:relative;overflow:hidden;display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:0 22px 44px -22px #0f1b3d4d,0 2px 6px #0f1b3d0d}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,var(--blue),var(--indigo),var(--teal))}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.step{flex:none;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--blue),var(--indigo));color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px;box-shadow:0 6px 14px #2f5bea44}
+.card h2{margin:0;font-size:20px;letter-spacing:-.2px}
+.intro{margin:10px 0 20px;color:var(--muted);font-size:14px}
+
+/* ---------- Form ---------- */
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:18px}
+.seg label{margin:0;cursor:pointer;position:relative;display:block}
+.seg input{position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer;margin:0}
+.seg span{display:block;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:650;color:#51618a;text-align:center;transition:.18s}
+.seg input:not(:checked)+span{background:#e3e8f1;border:1px solid #d3dae8;color:#6b7791;padding:9px 11px}
+.seg input:not(:checked)+span:hover{background:#d9e0ec;color:#47557a}
+.seg input:checked+span{background:linear-gradient(135deg,var(--blue),var(--indigo));color:#fff;box-shadow:0 6px 14px #2f5bea40}
+.seg input:focus-visible+span{outline:3px solid #2f5bea55;outline-offset:1px}
+.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+.grid>div{grid-column:span 3;min-width:0}
+.grid>.full{grid-column:span 6}
+.grid>.third{grid-column:span 2}
+.grid [hidden]{display:none}
+label.lbl{display:block;font-size:11.5px;font-weight:750;margin-bottom:6px;color:#4a5a82;text-transform:uppercase;letter-spacing:.6px}
+input[type=text],select{width:100%;min-height:46px;border:1.5px solid #d3dbec;border-radius:11px;padding:10px 12px;font:inherit;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+input[type=text]:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 4px #2f5bea22}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.chips .hint{margin:0}
+.chip{border:1px solid #cfd9f0;background:var(--soft);color:#3b4d7d;border-radius:999px;padding:4px 12px;font:600 12.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;cursor:pointer;transition:.15s}
+.chip:hover{border-color:var(--blue);color:var(--blue);background:#fff}
+.actions{margin-top:22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+button.primary{background:linear-gradient(135deg,var(--blue),var(--indigo));color:#fff;border:0;border-radius:11px;padding:13px 26px;font:inherit;font-weight:750;cursor:pointer;box-shadow:0 8px 18px -4px #2f5bea66;transition:.18s;min-height:46px}
+button.primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+button.primary:disabled{background:#b9c4de;box-shadow:none;cursor:not-allowed;transform:none;filter:none}
+button:focus-visible{outline:3px solid #2f5bea66;outline-offset:2px}
+.error{color:var(--err);font-size:13px;font-weight:600;min-height:20px}
+
+/* ---------- Results ---------- */
+.results{margin-top:22px;padding:18px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#f7f9ff,#f1f5fd);display:none;animation:rise .3s ease}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.results h3{margin:0 0 4px;font-size:16px}
+.result-intro{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+.answer-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.answer-card{font:inherit;color:inherit;width:100%;cursor:pointer;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:13px 10px;text-align:center;transition:.15s}
+.answer-card:hover{border-color:#9db4f2;transform:translateY(-2px);box-shadow:0 8px 18px -8px #2f5bea55}
+.answer-card.selected{border-color:var(--blue);background:#eef3ff;box-shadow:0 0 0 3px #2f5bea26}
+.answer-card .number{display:block;color:var(--muted);font-size:11px;margin-bottom:3px;text-transform:uppercase;letter-spacing:.6px}
+.answer-card strong{display:block;font-size:20px;color:var(--blue)}
+.answer-card .detail{display:block;margin-top:5px;color:var(--muted);font-size:12px}
+.select-bar{display:none;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+
+/* ---------- Generator ---------- */
+.gen-input{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.gen-input>div{flex:1;min-width:150px}
+#genCard{transition:box-shadow .4s}
+#genCard.flash{box-shadow:0 0 0 4px #14b8a666,0 22px 44px -22px #0f1b3d4d}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;margin:0 0 12px;font-weight:700}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:currentColor;vertical-align:-1px}
+.korvai-list{display:grid;gap:11px}
+.korvai-card{background:#fff;border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:11px;padding:13px 14px;box-shadow:0 4px 12px -8px #0f1b3d40}
+.korvai-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.korvai-card .number{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.copy{border:1px solid var(--line);background:var(--soft);border-radius:8px;padding:3px 11px;font:600 12px inherit;color:#3b4d7d;cursor:pointer}
+.copy:hover{border-color:var(--blue);color:var(--blue)}
+.korvai-line{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14.5px;line-height:1.75;overflow-wrap:anywhere}
+.korvai-p{color:var(--p);font-weight:650}
+.korvai-u{color:var(--u);font-weight:650}
+.korvai-m{color:var(--m);font-weight:650}
+.korvai-plus{color:#9aa7c4}
+.korvai-meta{color:var(--muted);font-size:12px;margin-top:5px}
+.result-intro:empty{display:none}
+.status{color:var(--m);font-size:13px;font-weight:650}
+.rep{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px dashed var(--line)}
+.korvai-top+.rep{border-top:0}
+.rep-n{flex:none;width:22px;height:22px;border-radius:7px;background:var(--soft);border:1px solid var(--line);color:#3b4d7d;font:700 11.5px system-ui,sans-serif;display:grid;place-items:center;align-self:flex-start;margin-top:3px}
+.rep .korvai-line{flex:1;min-width:0}
+.rep-tot{flex:none;color:var(--muted);font:600 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.empty{margin-top:22px;flex:1;min-height:200px;display:grid;place-items:center;align-content:center;gap:10px;text-align:center;padding:26px;border:1.5px dashed #cdd8ee;border-radius:14px;background:var(--soft);color:var(--muted);font-size:13.5px}
+.empty svg{width:92px;height:92px;color:var(--blue);opacity:.45}
+.results[style*="block"]+.empty{display:none}
+
+/* ---------- Notes ---------- */
+.notes{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 22px 22px;display:grid;grid-template-columns:minmax(0,560px);justify-content:center;gap:22px;align-items:start}
+details{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:0 20px;box-shadow:0 8px 20px -14px #0f1b3d40}
+summary{cursor:pointer;padding:15px 0;font-weight:700;font-size:14px;color:#33447a;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:20px;color:var(--blue);line-height:1}
+details[open] summary::after{content:"–"}
+details p{margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.65}
+footer{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:8px 22px 36px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+
+@media(max-width:980px){main{grid-template-columns:1fr}.notes{grid-template-columns:1fr}.m-hero{width:460px;height:460px;right:-170px;top:-200px}}
+@media(max-width:620px){.grid>div,.grid>.third{grid-column:span 6}.answer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:22px 18px}.flow{display:none}.hero{padding-bottom:84px}.seg{grid-template-columns:1fr}}
+@media(max-width:620px){
+.hero{padding:14px 0 40px}
+.hero .wrap{flex-wrap:nowrap;gap:12px}
+.brand{gap:12px;min-width:0}
+.logo{width:44px;height:44px;border-radius:13px}.logo svg{width:30px;height:30px}
+.hero h1{font-size:28px;line-height:1.1}
+.hero .tagline{margin:6px 0 0;font-size:10.5px;letter-spacing:1.5px}
+.hero-right{flex:none;align-items:flex-end}
+.hero-bars{width:92px}
+main{margin-top:-26px;padding:0 14px 20px;gap:16px}
+.card{padding:18px 16px}
+}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:13px}
+.pager .count{font-weight:700;color:var(--ink)}
+.pager .nav{display:flex;align-items:center;gap:8px}
+.pager .page{min-width:92px;text-align:center;color:var(--muted);font-weight:650}
+.pager button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:7px 12px;font:inherit;font-weight:650;cursor:pointer}
+.pager button:hover:not(:disabled){border-color:#9db8e0;background:#f3f7ff}
+.pager button:disabled{opacity:.4;cursor:not-allowed}
+.pager.bottom{justify-content:center;margin:12px 0 0}
+.invocation{position:relative;z-index:2;max-width:760px;margin:6px auto 10px;padding:8px 22px 14px;text-align:center}
+.invocation::before{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,#c9a54a,transparent);margin:0 auto 20px;max-width:420px}
+.invocation .bell{width:46px;height:58px;display:block;margin:0 auto 10px;filter:drop-shadow(0 3px 6px #9a741238)}
+.sloka{font-family:'Tiro Devanagari Sanskrit','Noto Serif Devanagari','Nirmala UI',Mangal,serif;font-size:21px;line-height:1.95;color:#2a3566;margin:0 0 8px}
+.sloka-source{font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:#9a7412;margin:0;font-weight:650}
+@media(max-width:620px){.sloka{font-size:17.5px}.invocation{padding-left:16px;padding-right:16px}}
+#genTotal.hl{border-color:#14b8a6;box-shadow:0 0 0 4px #14b8a655}
+#genTotal{transition:box-shadow .3s,border-color .3s}
+#results{scroll-margin-top:14px}
+#results:focus{outline:none}
+.credit{padding:16px 0 4px;border-top:1px solid var(--line)}
+.credit:first-of-type{border-top:0;padding-top:4px}
+.credit-head{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.avatar{width:76px;height:76px;border-radius:50%;object-fit:cover;object-position:center 22%;border:3px solid #fff;box-shadow:0 6px 16px -6px #0f1b3d66;flex:none;background:#e8edf8}
+.avatar.ph{display:grid;place-items:center;background:linear-gradient(135deg,#dbe4ff,#b8c7f5);color:#6f82c4}
+.credit-role{margin:0;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#6d5bd0;font-weight:700}
+.credit-name{margin:2px 0 0;font-size:16px;font-weight:700;color:var(--ink)}
+.credit-text{margin:0 0 12px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<path id="pOuter" d="M0,-188 C15,-170 15,-150 0,-128 C-15,-150 -15,-170 0,-188Z"/>
+<path id="pMid" d="M0,-146 C28,-124 28,-96 0,-68 C-28,-96 -28,-124 0,-146Z"/>
+<path id="pBig" d="M0,-104 C32,-82 32,-52 0,-22 C-32,-52 -32,-82 0,-104Z"/>
+<circle id="dot" cx="0" cy="-174" r="2.4"/>
+<symbol id="mandala" viewBox="-200 -200 400 400"><g fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round">
+<circle r="196"/><circle r="190" stroke-dasharray="2 5"/><circle r="124"/><circle r="66" stroke-width="1.6"/><circle r="40"/><circle r="12" fill="currentColor"/>
+<use href="#pOuter" transform="rotate(0)"/><use href="#pOuter" transform="rotate(15)"/><use href="#pOuter" transform="rotate(30)"/><use href="#pOuter" transform="rotate(45)"/><use href="#pOuter" transform="rotate(60)"/><use href="#pOuter" transform="rotate(75)"/><use href="#pOuter" transform="rotate(90)"/><use href="#pOuter" transform="rotate(105)"/><use href="#pOuter" transform="rotate(120)"/><use href="#pOuter" transform="rotate(135)"/><use href="#pOuter" transform="rotate(150)"/><use href="#pOuter" transform="rotate(165)"/><use href="#pOuter" transform="rotate(180)"/><use href="#pOuter" transform="rotate(195)"/><use href="#pOuter" transform="rotate(210)"/><use href="#pOuter" transform="rotate(225)"/><use href="#pOuter" transform="rotate(240)"/><use href="#pOuter" transform="rotate(255)"/><use href="#pOuter" transform="rotate(270)"/><use href="#pOuter" transform="rotate(285)"/><use href="#pOuter" transform="rotate(300)"/><use href="#pOuter" transform="rotate(315)"/><use href="#pOuter" transform="rotate(330)"/><use href="#pOuter" transform="rotate(345)"/><use href="#pMid" transform="rotate(15)"/><use href="#pMid" transform="rotate(45)"/><use href="#pMid" transform="rotate(75)"/><use href="#pMid" transform="rotate(105)"/><use href="#pMid" transform="rotate(135)"/><use href="#pMid" transform="rotate(165)"/><use href="#pMid" transform="rotate(195)"/><use href="#pMid" transform="rotate(225)"/><use href="#pMid" transform="rotate(255)"/><use href="#pMid" transform="rotate(285)"/><use href="#pMid" transform="rotate(315)"/><use href="#pMid" transform="rotate(345)"/><use href="#pBig" transform="rotate(0)"/><use href="#pBig" transform="rotate(45)"/><use href="#pBig" transform="rotate(90)"/><use href="#pBig" transform="rotate(135)"/><use href="#pBig" transform="rotate(180)"/><use href="#pBig" transform="rotate(225)"/><use href="#pBig" transform="rotate(270)"/><use href="#pBig" transform="rotate(315)"/>
+<g fill="currentColor" stroke="none"><use href="#dot" transform="rotate(5)"/><use href="#dot" transform="rotate(15)"/><use href="#dot" transform="rotate(25)"/><use href="#dot" transform="rotate(35)"/><use href="#dot" transform="rotate(45)"/><use href="#dot" transform="rotate(55)"/><use href="#dot" transform="rotate(65)"/><use href="#dot" transform="rotate(75)"/><use href="#dot" transform="rotate(85)"/><use href="#dot" transform="rotate(95)"/><use href="#dot" transform="rotate(105)"/><use href="#dot" transform="rotate(115)"/><use href="#dot" transform="rotate(125)"/><use href="#dot" transform="rotate(135)"/><use href="#dot" transform="rotate(145)"/><use href="#dot" transform="rotate(155)"/><use href="#dot" transform="rotate(165)"/><use href="#dot" transform="rotate(175)"/><use href="#dot" transform="rotate(185)"/><use href="#dot" transform="rotate(195)"/><use href="#dot" transform="rotate(205)"/><use href="#dot" transform="rotate(215)"/><use href="#dot" transform="rotate(225)"/><use href="#dot" transform="rotate(235)"/><use href="#dot" transform="rotate(245)"/><use href="#dot" transform="rotate(255)"/><use href="#dot" transform="rotate(265)"/><use href="#dot" transform="rotate(275)"/><use href="#dot" transform="rotate(285)"/><use href="#dot" transform="rotate(295)"/><use href="#dot" transform="rotate(305)"/><use href="#dot" transform="rotate(315)"/><use href="#dot" transform="rotate(325)"/><use href="#dot" transform="rotate(335)"/><use href="#dot" transform="rotate(345)"/><use href="#dot" transform="rotate(355)"/></g>
+</g></symbol>
+<path id="kPetal" d="M0,-168 C6,-156 6,-136 0,-122 C-6,-136 -6,-156 0,-168Z"/>
+<path id="kLotus" d="M0,-112 C15,-100 15,-86 0,-72 C-15,-86 -15,-100 0,-112Z"/>
+<path id="kLotusMini" d="M0,-112 C24,-96 24,-66 0,-44 C-24,-66 -24,-96 0,-112Z"/>
+<path id="kTick" d="M0,-186 L0,-176"/>
+<path id="kTickL" d="M0,-190 L0,-168"/>
+<path id="kPetalIn" d="M0,-158 C3.6,-150 3.6,-141 0,-133 C-3.6,-141 -3.6,-150 0,-158Z"/>
+<path id="kLotusB" d="M0,-92 C18,-82 18,-68 0,-58 C-18,-68 -18,-82 0,-92Z M0,-84 C9,-79 9,-71 0,-66 C-9,-71 -9,-79 0,-84Z"/>
+<path id="kLotusBack" d="M0,-92 C9,-87 9,-79 0,-73 C-9,-79 -9,-87 0,-92Z"/>
+<path id="kArc0" d="M1.78,-101.98 A102,102 0 0 1 49.45,-89.21" fill="none"/><path id="kArc1" d="M52.53,-87.43 A102,102 0 0 1 87.43,-52.53" fill="none"/><path id="kArc2" d="M89.21,-49.45 A102,102 0 0 1 101.98,-1.78" fill="none"/><path id="kArc3" d="M101.98,1.78 A102,102 0 0 1 89.21,49.45" fill="none"/><path id="kArc4" d="M87.43,52.53 A102,102 0 0 1 52.53,87.43" fill="none"/><path id="kArc5" d="M49.45,89.21 A102,102 0 0 1 1.78,101.98" fill="none"/><path id="kArc6" d="M-1.78,101.98 A102,102 0 0 1 -49.45,89.21" fill="none"/><path id="kArc7" d="M-52.53,87.43 A102,102 0 0 1 -87.43,52.53" fill="none"/><path id="kArc8" d="M-89.21,49.45 A102,102 0 0 1 -101.98,1.78" fill="none"/><path id="kArc9" d="M-101.98,-1.78 A102,102 0 0 1 -89.21,-49.45" fill="none"/><path id="kArc10" d="M-87.43,-52.53 A102,102 0 0 1 -52.53,-87.43" fill="none"/><path id="kArc11" d="M-49.45,-89.21 A102,102 0 0 1 -1.78,-101.98" fill="none"/>
+<!-- 72 Melakarta chakra, outer ring: 72 petals (the ragas) in 12 groups of 6 with the 12 swarasthanas (S R1 R2 G2 G3 M1 M2 P D1 D2 N2 N3) -->
+<symbol id="mkOuter" viewBox="-200 -200 400 400"><g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round">
+<circle r="198" stroke-width="1.6"/><circle r="194.5" stroke-width=".7"/>
+<circle cx="8.24" cy="-188.82" r="1.5" fill="currentColor" stroke="none"/><circle cx="24.67" cy="-187.38" r="1.5" fill="currentColor" stroke="none"/><circle cx="40.91" cy="-184.52" r="1.5" fill="currentColor" stroke="none"/><circle cx="56.83" cy="-180.25" r="1.5" fill="currentColor" stroke="none"/><circle cx="72.33" cy="-174.61" r="1.5" fill="currentColor" stroke="none"/><circle cx="87.27" cy="-167.65" r="1.5" fill="currentColor" stroke="none"/><circle cx="101.55" cy="-159.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="115.06" cy="-149.94" r="1.5" fill="currentColor" stroke="none"/><circle cx="127.69" cy="-139.35" r="1.5" fill="currentColor" stroke="none"/><circle cx="139.35" cy="-127.69" r="1.5" fill="currentColor" stroke="none"/><circle cx="149.94" cy="-115.06" r="1.5" fill="currentColor" stroke="none"/><circle cx="159.4" cy="-101.55" r="1.5" fill="currentColor" stroke="none"/><circle cx="167.65" cy="-87.27" r="1.5" fill="currentColor" stroke="none"/><circle cx="174.61" cy="-72.33" r="1.5" fill="currentColor" stroke="none"/><circle cx="180.25" cy="-56.83" r="1.5" fill="currentColor" stroke="none"/><circle cx="184.52" cy="-40.91" r="1.5" fill="currentColor" stroke="none"/><circle cx="187.38" cy="-24.67" r="1.5" fill="currentColor" stroke="none"/><circle cx="188.82" cy="-8.24" r="1.5" fill="currentColor" stroke="none"/><circle cx="188.82" cy="8.24" r="1.5" fill="currentColor" stroke="none"/><circle cx="187.38" cy="24.67" r="1.5" fill="currentColor" stroke="none"/><circle cx="184.52" cy="40.91" r="1.5" fill="currentColor" stroke="none"/><circle cx="180.25" cy="56.83" r="1.5" fill="currentColor" stroke="none"/><circle cx="174.61" cy="72.33" r="1.5" fill="currentColor" stroke="none"/><circle cx="167.65" cy="87.27" r="1.5" fill="currentColor" stroke="none"/><circle cx="159.4" cy="101.55" r="1.5" fill="currentColor" stroke="none"/><circle cx="149.94" cy="115.06" r="1.5" fill="currentColor" stroke="none"/><circle cx="139.35" cy="127.69" r="1.5" fill="currentColor" stroke="none"/><circle cx="127.69" cy="139.35" r="1.5" fill="currentColor" stroke="none"/><circle cx="115.06" cy="149.94" r="1.5" fill="currentColor" stroke="none"/><circle cx="101.55" cy="159.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="87.27" cy="167.65" r="1.5" fill="currentColor" stroke="none"/><circle cx="72.33" cy="174.61" r="1.5" fill="currentColor" stroke="none"/><circle cx="56.83" cy="180.25" r="1.5" fill="currentColor" stroke="none"/><circle cx="40.91" cy="184.52" r="1.5" fill="currentColor" stroke="none"/><circle cx="24.67" cy="187.38" r="1.5" fill="currentColor" stroke="none"/><circle cx="8.24" cy="188.82" r="1.5" fill="currentColor" stroke="none"/><circle cx="-8.24" cy="188.82" r="1.5" fill="currentColor" stroke="none"/><circle cx="-24.67" cy="187.38" r="1.5" fill="currentColor" stroke="none"/><circle cx="-40.91" cy="184.52" r="1.5" fill="currentColor" stroke="none"/><circle cx="-56.83" cy="180.25" r="1.5" fill="currentColor" stroke="none"/><circle cx="-72.33" cy="174.61" r="1.5" fill="currentColor" stroke="none"/><circle cx="-87.27" cy="167.65" r="1.5" fill="currentColor" stroke="none"/><circle cx="-101.55" cy="159.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="-115.06" cy="149.94" r="1.5" fill="currentColor" stroke="none"/><circle cx="-127.69" cy="139.35" r="1.5" fill="currentColor" stroke="none"/><circle cx="-139.35" cy="127.69" r="1.5" fill="currentColor" stroke="none"/><circle cx="-149.94" cy="115.06" r="1.5" fill="currentColor" stroke="none"/><circle cx="-159.4" cy="101.55" r="1.5" fill="currentColor" stroke="none"/><circle cx="-167.65" cy="87.27" r="1.5" fill="currentColor" stroke="none"/><circle cx="-174.61" cy="72.33" r="1.5" fill="currentColor" stroke="none"/><circle cx="-180.25" cy="56.83" r="1.5" fill="currentColor" stroke="none"/><circle cx="-184.52" cy="40.91" r="1.5" fill="currentColor" stroke="none"/><circle cx="-187.38" cy="24.67" r="1.5" fill="currentColor" stroke="none"/><circle cx="-188.82" cy="8.24" r="1.5" fill="currentColor" stroke="none"/><circle cx="-188.82" cy="-8.24" r="1.5" fill="currentColor" stroke="none"/><circle cx="-187.38" cy="-24.67" r="1.5" fill="currentColor" stroke="none"/><circle cx="-184.52" cy="-40.91" r="1.5" fill="currentColor" stroke="none"/><circle cx="-180.25" cy="-56.83" r="1.5" fill="currentColor" stroke="none"/><circle cx="-174.61" cy="-72.33" r="1.5" fill="currentColor" stroke="none"/><circle cx="-167.65" cy="-87.27" r="1.5" fill="currentColor" stroke="none"/><circle cx="-159.4" cy="-101.55" r="1.5" fill="currentColor" stroke="none"/><circle cx="-149.94" cy="-115.06" r="1.5" fill="currentColor" stroke="none"/><circle cx="-139.35" cy="-127.69" r="1.5" fill="currentColor" stroke="none"/><circle cx="-127.69" cy="-139.35" r="1.5" fill="currentColor" stroke="none"/><circle cx="-115.06" cy="-149.94" r="1.5" fill="currentColor" stroke="none"/><circle cx="-101.55" cy="-159.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="-87.27" cy="-167.65" r="1.5" fill="currentColor" stroke="none"/><circle cx="-72.33" cy="-174.61" r="1.5" fill="currentColor" stroke="none"/><circle cx="-56.83" cy="-180.25" r="1.5" fill="currentColor" stroke="none"/><circle cx="-40.91" cy="-184.52" r="1.5" fill="currentColor" stroke="none"/><circle cx="-24.67" cy="-187.38" r="1.5" fill="currentColor" stroke="none"/><circle cx="-8.24" cy="-188.82" r="1.5" fill="currentColor" stroke="none"/>
+<use href="#kTickL" transform="rotate(0)" stroke-width="2.4"/><use href="#kTick" transform="rotate(5)"/><use href="#kTick" transform="rotate(10)"/><use href="#kTick" transform="rotate(15)"/><use href="#kTick" transform="rotate(20)"/><use href="#kTick" transform="rotate(25)"/><use href="#kTickL" transform="rotate(30)" stroke-width="2.4"/><use href="#kTick" transform="rotate(35)"/><use href="#kTick" transform="rotate(40)"/><use href="#kTick" transform="rotate(45)"/><use href="#kTick" transform="rotate(50)"/><use href="#kTick" transform="rotate(55)"/><use href="#kTickL" transform="rotate(60)" stroke-width="2.4"/><use href="#kTick" transform="rotate(65)"/><use href="#kTick" transform="rotate(70)"/><use href="#kTick" transform="rotate(75)"/><use href="#kTick" transform="rotate(80)"/><use href="#kTick" transform="rotate(85)"/><use href="#kTickL" transform="rotate(90)" stroke-width="2.4"/><use href="#kTick" transform="rotate(95)"/><use href="#kTick" transform="rotate(100)"/><use href="#kTick" transform="rotate(105)"/><use href="#kTick" transform="rotate(110)"/><use href="#kTick" transform="rotate(115)"/><use href="#kTickL" transform="rotate(120)" stroke-width="2.4"/><use href="#kTick" transform="rotate(125)"/><use href="#kTick" transform="rotate(130)"/><use href="#kTick" transform="rotate(135)"/><use href="#kTick" transform="rotate(140)"/><use href="#kTick" transform="rotate(145)"/><use href="#kTickL" transform="rotate(150)" stroke-width="2.4"/><use href="#kTick" transform="rotate(155)"/><use href="#kTick" transform="rotate(160)"/><use href="#kTick" transform="rotate(165)"/><use href="#kTick" transform="rotate(170)"/><use href="#kTick" transform="rotate(175)"/><use href="#kTickL" transform="rotate(180)" stroke-width="2.4"/><use href="#kTick" transform="rotate(185)"/><use href="#kTick" transform="rotate(190)"/><use href="#kTick" transform="rotate(195)"/><use href="#kTick" transform="rotate(200)"/><use href="#kTick" transform="rotate(205)"/><use href="#kTickL" transform="rotate(210)" stroke-width="2.4"/><use href="#kTick" transform="rotate(215)"/><use href="#kTick" transform="rotate(220)"/><use href="#kTick" transform="rotate(225)"/><use href="#kTick" transform="rotate(230)"/><use href="#kTick" transform="rotate(235)"/><use href="#kTickL" transform="rotate(240)" stroke-width="2.4"/><use href="#kTick" transform="rotate(245)"/><use href="#kTick" transform="rotate(250)"/><use href="#kTick" transform="rotate(255)"/><use href="#kTick" transform="rotate(260)"/><use href="#kTick" transform="rotate(265)"/><use href="#kTickL" transform="rotate(270)" stroke-width="2.4"/><use href="#kTick" transform="rotate(275)"/><use href="#kTick" transform="rotate(280)"/><use href="#kTick" transform="rotate(285)"/><use href="#kTick" transform="rotate(290)"/><use href="#kTick" transform="rotate(295)"/><use href="#kTickL" transform="rotate(300)" stroke-width="2.4"/><use href="#kTick" transform="rotate(305)"/><use href="#kTick" transform="rotate(310)"/><use href="#kTick" transform="rotate(315)"/><use href="#kTick" transform="rotate(320)"/><use href="#kTick" transform="rotate(325)"/><use href="#kTickL" transform="rotate(330)" stroke-width="2.4"/><use href="#kTick" transform="rotate(335)"/><use href="#kTick" transform="rotate(340)"/><use href="#kTick" transform="rotate(345)"/><use href="#kTick" transform="rotate(350)"/><use href="#kTick" transform="rotate(355)"/>
+<use href="#kPetal" transform="rotate(2.5)"/><use href="#kPetalIn" transform="rotate(2.5)"/><use href="#kPetal" transform="rotate(7.5)"/><use href="#kPetalIn" transform="rotate(7.5)"/><use href="#kPetal" transform="rotate(12.5)"/><use href="#kPetalIn" transform="rotate(12.5)"/><use href="#kPetal" transform="rotate(17.5)"/><use href="#kPetalIn" transform="rotate(17.5)"/><use href="#kPetal" transform="rotate(22.5)"/><use href="#kPetalIn" transform="rotate(22.5)"/><use href="#kPetal" transform="rotate(27.5)"/><use href="#kPetalIn" transform="rotate(27.5)"/><use href="#kPetal" transform="rotate(32.5)"/><use href="#kPetalIn" transform="rotate(32.5)"/><use href="#kPetal" transform="rotate(37.5)"/><use href="#kPetalIn" transform="rotate(37.5)"/><use href="#kPetal" transform="rotate(42.5)"/><use href="#kPetalIn" transform="rotate(42.5)"/><use href="#kPetal" transform="rotate(47.5)"/><use href="#kPetalIn" transform="rotate(47.5)"/><use href="#kPetal" transform="rotate(52.5)"/><use href="#kPetalIn" transform="rotate(52.5)"/><use href="#kPetal" transform="rotate(57.5)"/><use href="#kPetalIn" transform="rotate(57.5)"/><use href="#kPetal" transform="rotate(62.5)"/><use href="#kPetalIn" transform="rotate(62.5)"/><use href="#kPetal" transform="rotate(67.5)"/><use href="#kPetalIn" transform="rotate(67.5)"/><use href="#kPetal" transform="rotate(72.5)"/><use href="#kPetalIn" transform="rotate(72.5)"/><use href="#kPetal" transform="rotate(77.5)"/><use href="#kPetalIn" transform="rotate(77.5)"/><use href="#kPetal" transform="rotate(82.5)"/><use href="#kPetalIn" transform="rotate(82.5)"/><use href="#kPetal" transform="rotate(87.5)"/><use href="#kPetalIn" transform="rotate(87.5)"/><use href="#kPetal" transform="rotate(92.5)"/><use href="#kPetalIn" transform="rotate(92.5)"/><use href="#kPetal" transform="rotate(97.5)"/><use href="#kPetalIn" transform="rotate(97.5)"/><use href="#kPetal" transform="rotate(102.5)"/><use href="#kPetalIn" transform="rotate(102.5)"/><use href="#kPetal" transform="rotate(107.5)"/><use href="#kPetalIn" transform="rotate(107.5)"/><use href="#kPetal" transform="rotate(112.5)"/><use href="#kPetalIn" transform="rotate(112.5)"/><use href="#kPetal" transform="rotate(117.5)"/><use href="#kPetalIn" transform="rotate(117.5)"/><use href="#kPetal" transform="rotate(122.5)"/><use href="#kPetalIn" transform="rotate(122.5)"/><use href="#kPetal" transform="rotate(127.5)"/><use href="#kPetalIn" transform="rotate(127.5)"/><use href="#kPetal" transform="rotate(132.5)"/><use href="#kPetalIn" transform="rotate(132.5)"/><use href="#kPetal" transform="rotate(137.5)"/><use href="#kPetalIn" transform="rotate(137.5)"/><use href="#kPetal" transform="rotate(142.5)"/><use href="#kPetalIn" transform="rotate(142.5)"/><use href="#kPetal" transform="rotate(147.5)"/><use href="#kPetalIn" transform="rotate(147.5)"/><use href="#kPetal" transform="rotate(152.5)"/><use href="#kPetalIn" transform="rotate(152.5)"/><use href="#kPetal" transform="rotate(157.5)"/><use href="#kPetalIn" transform="rotate(157.5)"/><use href="#kPetal" transform="rotate(162.5)"/><use href="#kPetalIn" transform="rotate(162.5)"/><use href="#kPetal" transform="rotate(167.5)"/><use href="#kPetalIn" transform="rotate(167.5)"/><use href="#kPetal" transform="rotate(172.5)"/><use href="#kPetalIn" transform="rotate(172.5)"/><use href="#kPetal" transform="rotate(177.5)"/><use href="#kPetalIn" transform="rotate(177.5)"/><use href="#kPetal" transform="rotate(182.5)"/><use href="#kPetalIn" transform="rotate(182.5)"/><use href="#kPetal" transform="rotate(187.5)"/><use href="#kPetalIn" transform="rotate(187.5)"/><use href="#kPetal" transform="rotate(192.5)"/><use href="#kPetalIn" transform="rotate(192.5)"/><use href="#kPetal" transform="rotate(197.5)"/><use href="#kPetalIn" transform="rotate(197.5)"/><use href="#kPetal" transform="rotate(202.5)"/><use href="#kPetalIn" transform="rotate(202.5)"/><use href="#kPetal" transform="rotate(207.5)"/><use href="#kPetalIn" transform="rotate(207.5)"/><use href="#kPetal" transform="rotate(212.5)"/><use href="#kPetalIn" transform="rotate(212.5)"/><use href="#kPetal" transform="rotate(217.5)"/><use href="#kPetalIn" transform="rotate(217.5)"/><use href="#kPetal" transform="rotate(222.5)"/><use href="#kPetalIn" transform="rotate(222.5)"/><use href="#kPetal" transform="rotate(227.5)"/><use href="#kPetalIn" transform="rotate(227.5)"/><use href="#kPetal" transform="rotate(232.5)"/><use href="#kPetalIn" transform="rotate(232.5)"/><use href="#kPetal" transform="rotate(237.5)"/><use href="#kPetalIn" transform="rotate(237.5)"/><use href="#kPetal" transform="rotate(242.5)"/><use href="#kPetalIn" transform="rotate(242.5)"/><use href="#kPetal" transform="rotate(247.5)"/><use href="#kPetalIn" transform="rotate(247.5)"/><use href="#kPetal" transform="rotate(252.5)"/><use href="#kPetalIn" transform="rotate(252.5)"/><use href="#kPetal" transform="rotate(257.5)"/><use href="#kPetalIn" transform="rotate(257.5)"/><use href="#kPetal" transform="rotate(262.5)"/><use href="#kPetalIn" transform="rotate(262.5)"/><use href="#kPetal" transform="rotate(267.5)"/><use href="#kPetalIn" transform="rotate(267.5)"/><use href="#kPetal" transform="rotate(272.5)"/><use href="#kPetalIn" transform="rotate(272.5)"/><use href="#kPetal" transform="rotate(277.5)"/><use href="#kPetalIn" transform="rotate(277.5)"/><use href="#kPetal" transform="rotate(282.5)"/><use href="#kPetalIn" transform="rotate(282.5)"/><use href="#kPetal" transform="rotate(287.5)"/><use href="#kPetalIn" transform="rotate(287.5)"/><use href="#kPetal" transform="rotate(292.5)"/><use href="#kPetalIn" transform="rotate(292.5)"/><use href="#kPetal" transform="rotate(297.5)"/><use href="#kPetalIn" transform="rotate(297.5)"/><use href="#kPetal" transform="rotate(302.5)"/><use href="#kPetalIn" transform="rotate(302.5)"/><use href="#kPetal" transform="rotate(307.5)"/><use href="#kPetalIn" transform="rotate(307.5)"/><use href="#kPetal" transform="rotate(312.5)"/><use href="#kPetalIn" transform="rotate(312.5)"/><use href="#kPetal" transform="rotate(317.5)"/><use href="#kPetalIn" transform="rotate(317.5)"/><use href="#kPetal" transform="rotate(322.5)"/><use href="#kPetalIn" transform="rotate(322.5)"/><use href="#kPetal" transform="rotate(327.5)"/><use href="#kPetalIn" transform="rotate(327.5)"/><use href="#kPetal" transform="rotate(332.5)"/><use href="#kPetalIn" transform="rotate(332.5)"/><use href="#kPetal" transform="rotate(337.5)"/><use href="#kPetalIn" transform="rotate(337.5)"/><use href="#kPetal" transform="rotate(342.5)"/><use href="#kPetalIn" transform="rotate(342.5)"/><use href="#kPetal" transform="rotate(347.5)"/><use href="#kPetalIn" transform="rotate(347.5)"/><use href="#kPetal" transform="rotate(352.5)"/><use href="#kPetalIn" transform="rotate(352.5)"/><use href="#kPetal" transform="rotate(357.5)"/><use href="#kPetalIn" transform="rotate(357.5)"/>
+<circle r="120" stroke-width="1.4"/><circle r="117" stroke-width=".7"/><circle r="113" stroke-width=".7"/><circle r="96" stroke-width="1.3"/>
+<path d="M0,-96 L0,-117" transform="rotate(0)"/><path d="M0,-96 L0,-117" transform="rotate(30)"/><path d="M0,-96 L0,-117" transform="rotate(60)"/><path d="M0,-96 L0,-117" transform="rotate(90)"/><path d="M0,-96 L0,-117" transform="rotate(120)"/><path d="M0,-96 L0,-117" transform="rotate(150)"/><path d="M0,-96 L0,-117" transform="rotate(180)"/><path d="M0,-96 L0,-117" transform="rotate(210)"/><path d="M0,-96 L0,-117" transform="rotate(240)"/><path d="M0,-96 L0,-117" transform="rotate(270)"/><path d="M0,-96 L0,-117" transform="rotate(300)"/><path d="M0,-96 L0,-117" transform="rotate(330)"/>
+<g font-family="Lato,Calibri,sans-serif" font-size="12" font-weight="700" letter-spacing="1" fill="currentColor" stroke="none"><text><textPath href="#kArc0" startOffset="50%" text-anchor="middle">S</textPath></text><text><textPath href="#kArc1" startOffset="50%" text-anchor="middle">R1</textPath></text><text><textPath href="#kArc2" startOffset="50%" text-anchor="middle">R2</textPath></text><text><textPath href="#kArc3" startOffset="50%" text-anchor="middle">G2</textPath></text><text><textPath href="#kArc4" startOffset="50%" text-anchor="middle">G3</textPath></text><text><textPath href="#kArc5" startOffset="50%" text-anchor="middle">M1</textPath></text><text><textPath href="#kArc6" startOffset="50%" text-anchor="middle">M2</textPath></text><text><textPath href="#kArc7" startOffset="50%" text-anchor="middle">P</textPath></text><text><textPath href="#kArc8" startOffset="50%" text-anchor="middle">D1</textPath></text><text><textPath href="#kArc9" startOffset="50%" text-anchor="middle">D2</textPath></text><text><textPath href="#kArc10" startOffset="50%" text-anchor="middle">N2</textPath></text><text><textPath href="#kArc11" startOffset="50%" text-anchor="middle">N3</textPath></text></g>
+</g></symbol>
+<!-- inner ring: 24-petal lotus, twelve-pointed star and the six-pointed star of the six ragas in each chakra -->
+<symbol id="mkInner" viewBox="-200 -200 400 400"><g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round">
+<use href="#kLotusBack" transform="rotate(0)"/><use href="#kLotusBack" transform="rotate(30)"/><use href="#kLotusBack" transform="rotate(60)"/><use href="#kLotusBack" transform="rotate(90)"/><use href="#kLotusBack" transform="rotate(120)"/><use href="#kLotusBack" transform="rotate(150)"/><use href="#kLotusBack" transform="rotate(180)"/><use href="#kLotusBack" transform="rotate(210)"/><use href="#kLotusBack" transform="rotate(240)"/><use href="#kLotusBack" transform="rotate(270)"/><use href="#kLotusBack" transform="rotate(300)"/><use href="#kLotusBack" transform="rotate(330)"/>
+<use href="#kLotusB" transform="rotate(15)"/><circle cx="18.12" cy="-67.61" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(45)"/><circle cx="49.5" cy="-49.5" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(75)"/><circle cx="67.61" cy="-18.12" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(105)"/><circle cx="67.61" cy="18.12" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(135)"/><circle cx="49.5" cy="49.5" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(165)"/><circle cx="18.12" cy="67.61" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(195)"/><circle cx="-18.12" cy="67.61" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(225)"/><circle cx="-49.5" cy="49.5" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(255)"/><circle cx="-67.61" cy="18.12" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(285)"/><circle cx="-67.61" cy="-18.12" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(315)"/><circle cx="-49.5" cy="-49.5" r="1.7" fill="currentColor" stroke="none"/><use href="#kLotusB" transform="rotate(345)"/><circle cx="-18.12" cy="-67.61" r="1.7" fill="currentColor" stroke="none"/>
+<circle r="56" stroke-width="1.4"/><circle r="52" stroke-width=".7"/>
+<path d="M0,-50 L25,43.3 L-43.3,-25 L50,-0 L-43.3,25 L25,-43.3 L0,50 L-25,-43.3 L43.3,25 L-50,0 L43.3,-25 L-25,43.3Z"/>
+<circle r="32" stroke-width="1.3"/><path d="M0,-28 L24.25,14 L-24.25,14Z"/><path d="M24.25,-14 L0,28 L-24.25,-14Z"/>
+<circle cx="11.75" cy="-20.35" r="1.4" fill="currentColor" stroke="none"/><circle cx="23.5" cy="-0" r="1.4" fill="currentColor" stroke="none"/><circle cx="11.75" cy="20.35" r="1.4" fill="currentColor" stroke="none"/><circle cx="-11.75" cy="20.35" r="1.4" fill="currentColor" stroke="none"/><circle cx="-23.5" cy="0" r="1.4" fill="currentColor" stroke="none"/><circle cx="-11.75" cy="-20.35" r="1.4" fill="currentColor" stroke="none"/>
+<circle r="17" stroke-width="1.2"/><circle r="8" fill="currentColor"/>
+</g></symbol>
+<!-- simplified version for the small logo: a ring of 72 dashes, then the 12 chakra lotus petals -->
+<symbol id="melakartaMini" viewBox="-200 -200 400 400"><g fill="none" stroke="currentColor" stroke-width="9" stroke-linejoin="round">
+<circle r="190" stroke-width="8"/><circle r="156" pathLength="144" stroke-dasharray="1 1" stroke-width="24"/><circle r="122" stroke-width="7"/>
+<use href="#kLotusMini" transform="rotate(0)"/><use href="#kLotusMini" transform="rotate(30)"/><use href="#kLotusMini" transform="rotate(60)"/><use href="#kLotusMini" transform="rotate(90)"/><use href="#kLotusMini" transform="rotate(120)"/><use href="#kLotusMini" transform="rotate(150)"/><use href="#kLotusMini" transform="rotate(180)"/><use href="#kLotusMini" transform="rotate(210)"/><use href="#kLotusMini" transform="rotate(240)"/><use href="#kLotusMini" transform="rotate(270)"/><use href="#kLotusMini" transform="rotate(300)"/><use href="#kLotusMini" transform="rotate(330)"/>
+<circle r="16" fill="currentColor" stroke="none"/>
+</g></symbol>
+</defs></svg>
+<svg class="mandala m-bg1" aria-hidden="true"><use href="#mandala"/></svg>
+<svg class="mandala m-bg2" aria-hidden="true"><use href="#mandala"/></svg>
+
+<header class="hero">
+  <svg class="mandala m-hero" viewBox="-200 -200 400 400" aria-hidden="true"><g class="ring-out"><use href="#mkOuter" x="-200" y="-200" width="400" height="400"/><animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="360s" repeatCount="indefinite"/></g><g class="ring-in"><use href="#mkInner" x="-200" y="-200" width="400" height="400"/><animateTransform attributeName="transform" type="rotate" from="360 0 0" to="0 0 0" dur="240s" repeatCount="indefinite"/></g></svg>
+  <svg class="mandala m-hero2" viewBox="-200 -200 400 400" aria-hidden="true"><g class="ring-out"><use href="#mkOuter" x="-200" y="-200" width="400" height="400"/><animateTransform attributeName="transform" type="rotate" from="360 0 0" to="0 0 0" dur="300s" repeatCount="indefinite"/></g><g class="ring-in"><use href="#mkInner" x="-200" y="-200" width="400" height="400"/><animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="200s" repeatCount="indefinite"/></g></svg>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg><use href="#melakartaMini"/></svg></div>
+      <div>
+        <h1><span class="t-bold">Korvai</span> <span class="t-light">Studio</span></h1>
+        <p class="eyebrow tagline">Let’s make some <span class="tg-pun"><span class="tg-taal">Taal</span><span class="tg-cul">-culation!</span></span></p>
+      </div>
+    </div>
+    <div class="hero-right">
+      <svg class="hero-bars" viewBox="0 0 240 100" role="img" aria-label="Rhythm bars: rising Poorvangam, patterned Madhyangam, steady Uttarangam">
+        <rect x="8" y="68" width="12" height="22" rx="3" fill="#6c9bff"/><rect x="26" y="60" width="12" height="30" rx="3" fill="#6c9bff"/><rect x="44" y="52" width="12" height="38" rx="3" fill="#6c9bff"/><rect x="62" y="44" width="12" height="46" rx="3" fill="#6c9bff"/>
+        <rect x="86" y="56" width="12" height="34" rx="3" fill="#2dd4bf"/><rect x="104" y="42" width="12" height="48" rx="3" fill="#2dd4bf"/><rect x="122" y="56" width="12" height="34" rx="3" fill="#2dd4bf"/><rect x="140" y="56" width="12" height="34" rx="3" fill="#2dd4bf"/><rect x="158" y="56" width="12" height="34" rx="3" fill="#2dd4bf"/>
+        <rect x="182" y="34" width="12" height="56" rx="3" fill="#fbbf24"/><rect x="200" y="34" width="12" height="56" rx="3" fill="#fbbf24"/><rect x="218" y="34" width="12" height="56" rx="3" fill="#fbbf24"/>
+      </svg>
+    <nav class="flow" aria-label="Workflow">
+      <a href="#decoder"><b>1</b>Calculate matras</a>
+      <span class="arrow" aria-hidden="true">→</span>
+      <a href="#genCard"><b>2</b>Generate korvai</a>
+    </nav>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ================= Decoder ================= -->
+  <section class="card" id="decoder">
+    <div class="card-head"><span class="step">1</span><h2>Matra Count Calculator</h2></div>
+    <p class="intro">Pick a thala from the common list, or build one from Thalam, Jaathi and Gathi, then enter the nadai and the eduppu and click on <strong>Calculate</strong> button. In case of multiple nadai, separate them with "-" as shown. Eg: 4-5-6, or 4-66-888 etc.</p>
+
+    <div class="seg" role="radiogroup" aria-label="How to choose the thalam">
+      <label><input type="radio" name="mode" value="quick" checked><span>Basic Thalas</span></label>
+      <label><input type="radio" name="mode" value="build"><span>Build from Thalam · Jaathi · Gathi</span></label>
+    </div>
+
+    <div class="grid">
+      <div id="quickWrap" class="full">
+        <label class="lbl" for="quick">Thalam</label>
+        <select id="quick">
+          <option value="8">Adi Thalam (8 beats)</option>
+          <option value="16">Adi Thalam (16 beats)</option>
+          <option value="3.5">Mishra Chapu (3.5 beats)</option>
+          <option value="2.5">Khanda Chapu (2.5 beats)</option>
+          <option value="3">Rupakam (3 beats)</option>
+          <option value="9">Khanda Triputa (9 beats)</option>
+        </select>
+      </div>
+      <div id="thalamWrap" class="third" hidden>
+        <label class="lbl" for="thalam">Thalam</label>
+        <select id="thalam">
+          <option value="eka">Eka Thalam</option>
+          <option value="triputa" selected>Triputa Thalam</option>
+          <option value="rupaka">Rupaka Thalam</option>
+          <option value="atta">Atta Thalam</option>
+          <option value="mattya">Mattya Thalam</option>
+          <option value="jhampa">Jhampa Thalam</option>
+          <option value="dhruva">Dhruva Thalam</option>
+        </select>
+      </div>
+      <div id="jaathiWrap" class="third" hidden>
+        <label class="lbl" for="jaathi">Jaathi</label>
+        <select id="jaathi">
+          <option value="3">Tishra Jaathi</option>
+          <option value="4" selected>Chatushra Jaathi</option>
+          <option value="5">Khanda Jaathi</option>
+          <option value="7">Mishra Jaathi</option>
+          <option value="9">Sankeerna Jaathi</option>
+        </select>
+      </div>
+      <div id="gathiWrap" class="third" hidden>
+        <label class="lbl" for="gathi">Gathi</label>
+        <select id="gathi">
+          <option value="3">Tishra Gathi</option>
+          <option value="4" selected>Chatushra Gathi</option>
+          <option value="5">Khanda Gathi</option>
+          <option value="7">Mishra Gathi</option>
+          <option value="9">Sankeerna Gathi</option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl" for="eduppu">Eduppu (maatras, Chatusra)</label>
+        <input id="eduppu" type="text" inputmode="numeric" value="0" placeholder="e.g. 0">
+        <div class="hint">0 = Samam</div>
+      </div>
+      <div>
+        <label class="lbl" for="nadai">Nadai</label>
+        <input id="nadai" type="text" value="4" placeholder="e.g. 4 or 4-66-888">
+        <div class="chips">
+          <span class="hint">Try:</span>
+          <button type="button" class="chip" data-nadai="4">4</button>
+          <button type="button" class="chip" data-nadai="4-5-6">4-5-6</button>
+          <button type="button" class="chip" data-nadai="4-66-888">4-66-888</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="calculate">Calculate</button>
+      <span class="error" id="error" role="alert"></span>
+      <span class="status" id="calcStatus" role="status"></span>
+    </div>
+
+    <div class="results" id="results" aria-live="polite">
+      <h3>Korvai Maatra Results</h3>
+      <p class="result-intro" id="resultIntro"></p>
+      <p class="result-intro" id="resultNote"></p>
+      <div id="decPagerTop"></div>
+      <div class="answer-grid" id="answerGrid"></div>
+      <div id="decPagerBottom"></div>
+      <div class="select-bar" id="selectBar">
+        <span class="hint">Select a result to send it to the Korvai Generator.</span>
+        <button class="primary" id="useResult" type="button" disabled>Open in Korvai Generator →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Generator ================= -->
+  <section class="card" id="genCard">
+    <div class="card-head"><span class="step">2</span><h2>Korvai Generator</h2></div>
+    <p class="intro">Enter the total maatras of the korvai, or select a result in the Matra Count Calculator to bring it here.</p>
+
+    <div class="gen-input">
+      <div>
+        <label class="lbl" for="genTotal" id="genTotalLabel">Total maatras</label>
+        <input id="genTotal" type="text" inputmode="numeric" placeholder="e.g. 96">
+      </div>
+      <button class="primary" id="generate" type="button">Generate Korvai</button>
+    </div>
+    <div class="actions" style="margin-top:10px"><span class="error" id="genError" role="alert"></span></div>
+
+    <div class="results" id="genResults" aria-live="polite">
+      <h3>Korvai Patterns</h3>
+      <p class="result-intro" id="genIntro"></p>
+      <p class="result-intro" id="genNote"></p>
+      <div class="legend">
+        <span class="korvai-p">Poorvangam</span>
+        <span class="korvai-m" id="legendM">Madhyangam (in some korvais)</span>
+        <span class="korvai-u">Uttarangam</span>
+      </div>
+      <div id="genPagerTop"></div>
+      <div class="korvai-list" id="genList"></div>
+      <div id="genPagerBottom"></div>
+    </div>
+    <div class="empty">
+      <svg aria-hidden="true"><use href="#mandala"/></svg>
+      <div>Your korvai patterns will appear here.</div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= Reference notes ================= -->
+<div class="notes">
+  <details>
+    <summary>Credits</summary>
+    <div class="credit">
+      <div class="credit-head">
+        <img class="avatar" src="data:image/jpeg;base64,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" alt="Photo of Vidwan Mannargudi A Easwaran" width="76" height="76">
+        <div>
+          <p class="credit-role">Guidance and Inspiration</p>
+          <p class="credit-name">Vidwan Mannargudi A Easwaran</p>
+        </div>
+      </div>
+      <p class="credit-text">Mannargudi Easwaran is a leading contemporary mridangam player and Carnatic musician from India, and a Top Graded mridangam artist of All India Radio (AIR). He was a staff artiste at AIR Chennai and has received several awards, such as the Sangeet Natak Akademi Award and Kartik Fine Arts' Lifetime Achievement Award.</p>
+    </div>
+    <!--div class="credit">
+      <div class="credit-head">
+        <span class="avatar ph" role="img" aria-label="Photo placeholder for T Narasimha Prasad"><svg viewBox="0 0 24 24" width="38" height="38" aria-hidden="true"><circle cx="12" cy="8.5" r="4.2" fill="currentColor"/><path d="M3.5 21c.6-4.6 4.2-7 8.5-7s7.9 2.4 8.5 7z" fill="currentColor"/></svg></span>
+        <div>
+          <p class="credit-role">Technical Assistance</p>
+          <p class="credit-name">T Narasimha Prasad</p>
+        </div>
+      </div>
+      <p class="credit-text">With over 15 years of experience as a software professional, T. Narasimha Prasad has been instrumental in providing valuable technical support and guidance to this initiative. We gratefully acknowledge his time, insights, and generous support.</p>
+    </div-->
+    <div class="credit">
+      <div class="credit-head">
+        <img class="avatar" src="data:image/jpeg;base64,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" alt="Photo of Prithvi Krishna" width="76" height="76">
+        <div>
+          <p class="credit-role">Designed & Created by</p>
+          <p class="credit-name">Prithvi Krishna</p>
+        </div>
+      </div>
+      <p class="credit-text">An All India Radio (AIR) Top-Grade Mridangam Artist and disciple of renowned Vidwan Mannargudi A. Easwaran, based in Bengaluru. Alongside his musical journey, he brings over 15 years of professional experience in the IT industry, having worked with reputed organisations such as Wipro and Fidelity.</p>
+    </div>
+  </details>
+</div>
+
+<section class="invocation" aria-label="Invocation">
+  <svg class="bell" viewBox="0 0 64 80" role="img" aria-label="Temple bell">
+    <defs><linearGradient id="bellGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f5d98a"/><stop offset="1" stop-color="#d4a23a"/></linearGradient></defs>
+    <g stroke="#8a6a12" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M26 15 C26 3 38 3 38 15" fill="none" stroke-width="2.6"/>
+      <rect x="28.5" y="13" width="7" height="6" rx="2" fill="url(#bellGold)"/>
+      <path d="M32 19 C20 19 18 31 16 43 C15 50 12 55 8 59 L56 59 C52 55 49 50 48 43 C46 31 44 19 32 19Z" fill="url(#bellGold)"/>
+      <path d="M19.5 36 C27 40 37 40 44.5 36 M16.5 47 C26 52 38 52 47.5 47" fill="none" stroke-width="1.5"/>
+      <path d="M6 59 H58 M8 63 H56" fill="none" stroke-width="2.4"/>
+      <path d="M32 63 V66" fill="none"/>
+      <circle cx="32" cy="70" r="4.4" fill="url(#bellGold)"/>
+    </g>
+  </svg>
+  <p class="sloka" lang="sa">ज्ञानानन्दमयं देवं निर्मलस्फटिकाकृतिम् ।<br>आधारं सर्वविद्यानां हयग्रीवमुपास्महे ॥</p>
+  <p class="sloka-source">Sri Hayagriva Stotram · Swami Vedanta Desikan</p>
+</section>
+
+<footer>
+  <div>Credits: Prithvi Krishna | Narasimha Prasad</div>
+  <div>Copyrights &copy; 2026</div>
+</footer>
+
+<script>
+const RESULT_COUNT = 6;   // used for the asymmetric grand totals sent to the generator
+const DEC_PAGE = 6;       // decoder values shown per page
+let autoTotals = null;
+let genAsym = false;   // true while the generator shows asymmetric korvais   // set when the decoder sends asymmetric korvais straight to the generator
+const MAX_CYCLES = 1000;
+const MAX_LENGTH = 300;   // single-nadai results must be below this
+const MAX_SEQ_X = 3000;   // largest x searched for a nadai sequence
+
+function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
+function lcm(a, b) { return Math.abs(a * b) / gcd(a, b); }
+
+function fmt(n) {
+  return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+}
+
+// "4-66-888" -> [{nadai:4,count:1},{nadai:6,count:2},{nadai:8,count:3}]
+// A segment of repeated digits (66) means that many plays at that nadai.
+function parseNadaiSequence(value) {
+  const parts = value.split('-').map(p => p.replace(/\s+/g, ''));
+  const pattern = /^(?:([1-9])\1*|(?:10)+)$/;   // 66 = nadai 6 twice, 1010 = nadai 10 twice
+  if (parts.length < 2 || parts.some(p => !pattern.test(p))) return null;
+  return parts.map(p => p.startsWith('10')
+    ? {nadai: 10, count: p.length / 2}
+    : {nadai: Number(p[0]), count: p.length});
+}
+
+function addCard(grid, index, title, detail, value, asym) {
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.className = 'answer-card';
+  card.setAttribute('aria-pressed', 'false');
+  const label = document.createElement('span');
+  label.className = 'number';
+  label.textContent = `Value ${index + 1}`;
+  const strong = document.createElement('strong');
+  strong.textContent = title;
+  const small = document.createElement('span');
+  small.className = 'detail';
+  small.textContent = detail;
+  card.append(label, strong);
+  if (detail) card.append(small);
+  card.addEventListener('click', () => selectResult(card, value, asym));
+  if (selectedValue !== null && selectedValue === value) {
+    card.classList.add('selected');
+    card.setAttribute('aria-pressed', 'true');
+    selectedCard = card;
+  }
+  grid.appendChild(card);
+}
+
+function calculateResults() {
+  const selText = id => { const s = document.getElementById(id); return s.options[s.selectedIndex].text; };
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  let beats, thalamText;
+  if (mode === 'quick') {
+    beats = Number(document.getElementById('quick').value);
+    thalamText = selText('quick');
+  } else {
+    // Thalam beats from Thalam + Jaathi (j = laghu count), then Gathi: each beat holds g/2 beats.
+    const j = Number(document.getElementById('jaathi').value);
+    const g = Number(document.getElementById('gathi').value);
+    const thalamBeats = {eka: j, triputa: j + 4, rupaka: j + 2, atta: 2 * j + 4,
+                         mattya: 2 * j + 2, jhampa: j + 3, dhruva: 3 * j + 2}[document.getElementById('thalam').value];
+    beats = thalamBeats * g / 2;
+    thalamText = `${selText('thalam')} · ${selText('jaathi')} · ${selText('gathi')} · ${fmt(beats)} beats`;
+  }
+  const eduppuRaw = document.getElementById('eduppu').value.trim();
+  const eduppu = Number(eduppuRaw);
+  const nadaiText = document.getElementById('nadai').value.trim();
+  const error = document.getElementById('error');
+  const results = document.getElementById('results');
+  const answerGrid = document.getElementById('answerGrid');
+  const beats2 = Math.round(beats * 2);   // 2 x beats, always an integer
+
+  error.textContent = '';
+  results.style.display = 'none';
+  answerGrid.innerHTML = '';
+  document.getElementById('resultNote').textContent = '';
+  document.getElementById('calcStatus').textContent = '';
+  autoTotals = null;
+  document.getElementById('selectBar').style.display = 'none';
+  clearSelection();
+
+  if (eduppuRaw === '' || !Number.isInteger(eduppu)) {
+    error.textContent = 'Enter Eduppu as a whole number of maatras. Use 0 for Samam.';
+    return;
+  }
+
+  const eduppuText = eduppu === 0 ? 'Samam (0)' : eduppu;
+  const answers = [];
+  let capText = '';
+
+  if (/^([1-9]|10)$/.test(nadaiText)) {
+    // Single nadai: N x cycle maatras + Eduppu must be divisible by 3.
+    // Eduppu is always counted in Chatusra nadai (4 maatras per beat): 2 = 1/2 beat.
+    const nadai = Number(nadaiText);
+    capText = `searched below ${MAX_LENGTH} maatras`;
+    for (let k = 1; k <= MAX_CYCLES; k++) {
+      // total maatras x 4 = nadai x (2 x beats2 x k + eduppu), kept as an integer
+      const total4 = nadai * (2 * beats2 * k + eduppu);
+      if (total4 <= 0 || total4 % 12 !== 0) continue;   // whole maatras, divisible by 3
+      const length = total4 / 12;
+      if (length >= MAX_LENGTH) break;
+      answers.push({
+        title: `${fmt(length)} matras`,
+        value: length
+      });
+    }
+    document.getElementById('resultIntro').textContent =
+      `${thalamText} · Nadai: ${nadai} · Eduppu: ${eduppuText}`;
+    // Thalam divisible by 3 but Eduppu is not: three identical repetitions cannot end on Samam.
+    if (!answers.length && Number.isInteger(beats) && beats % 3 === 0 && eduppu % 3 !== 0) {
+      const totals = asymmetricTotals(beats2, nadai, eduppu);
+      if (totals.length) {
+        // No matra counts here: the asymmetric korvais are generated directly in the Korvai Generator.
+        showAsymDirect(totals, `${thalamText} · Nadai: ${nadai} · Eduppu: ${eduppuText}`);
+        return;
+      }
+    }
+  } else {
+    // Nadai sequence such as 4-66-888.
+    const groups = parseNadaiSequence(nadaiText);
+    if (!groups) {
+      error.textContent = 'Enter one nadai (1 to 10) or a sequence such as 4-66-888, 4-6-8, 4-55-666 or 4-5-6.';
+      return;
+    }
+    // Every part must end on a whole maatra and on a quarter-beat boundary (0, 1/4, 1/2, 3/4 or a full beat).
+    // In nadai n one beat has n maatras, so x maatras = x/n beats = 4x/n quarter-beats, which must be whole.
+    const step = groups.reduce((v, g) => lcm(v, g.nadai / gcd(g.nadai, 4)), 1);
+    capText = `searched up to ${MAX_SEQ_X} maatras`;
+    for (let x = step; x <= MAX_SEQ_X; x += step) {
+      // Work in quarter-beats so everything stays an exact integer.
+      const totalQ = groups.reduce((sum, g) => sum + g.count * (4 * x / g.nadai), 0);
+      // Eduppu is always in Chatusra nadai (4 maatras per beat), so Eduppu maatras = Eduppu quarter-beats.
+      // S = total beats - Eduppu must be a positive multiple of the thalam's beats.
+      const num = totalQ - eduppu;                       // = 4 x S
+      if (num <= 0 || num % (2 * beats2) !== 0) continue;
+      answers.push({
+        title: `${x} matras`,
+        value: x
+      });
+    }
+    document.getElementById('resultIntro').textContent =
+      `${thalamText} · Nadai: ${nadaiText.replace(/\s+/g, '')} · Eduppu: ${eduppuText}`;
+  }
+
+  if (!answers.length) {
+    // Beats divisible by 3 but Eduppu not: a korvai played three times cannot end on Samam.
+    error.textContent = (!/^([1-9]|10)$/.test(nadaiText) && Number.isInteger(beats) && beats % 3 === 0 && eduppu % 3 !== 0)
+      ? 'Asymmetric korvais are available for a single nadai only. Try a single nadai such as 4.'
+      : 'No valid value found. Check the thalam, nadai and Eduppu.';
+    results.style.display = 'block';
+    return;
+  }
+  decAnswers = answers;
+  decPage = 0;
+  decCap = capText;
+  renderDecoder();
+  document.getElementById('selectBar').style.display = 'flex';
+  results.style.display = 'block';
+  results.scrollIntoView({behavior: 'smooth', block: 'start'});   // bring the results into focus
+  results.setAttribute('tabindex', '-1');
+  results.focus({preventScroll: true});
+}
+
+document.getElementById('calculate').addEventListener('click', calculateResults);
+['eduppu', 'nadai'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') calculateResults(); }));
+
+// Example chips fill the nadai field.
+document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => {
+  const input = document.getElementById('nadai');
+  input.value = chip.dataset.nadai;
+  input.dispatchEvent(new Event('input'));
+  input.focus();
+}));
+
+// Results appear only when Calculate is clicked; changing an input clears old results.
+function resetResults() {
+  document.getElementById('calcStatus').textContent = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('error').textContent = '';
+  document.getElementById('selectBar').style.display = 'none';
+  clearSelection();
+}
+['quick', 'thalam', 'jaathi', 'gathi', 'eduppu', 'nadai'].forEach(id =>
+  document.getElementById(id).addEventListener('input', resetResults));
+document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener('change', () => {
+  const build = document.querySelector('input[name="mode"]:checked').value === 'build';
+  document.getElementById('quickWrap').hidden = build;
+  ['thalamWrap', 'jaathiWrap', 'gathiWrap'].forEach(id => { document.getElementById(id).hidden = !build; });
+  resetResults();
+}));
+
+// ---------- Selecting a decoder result and sending it to the generator ----------
+let selectedCard = null;
+let selectedValue = null;
+function clearSelection() {
+  if (selectedCard) {
+    selectedCard.classList.remove('selected');
+    selectedCard.setAttribute('aria-pressed', 'false');
+  }
+  selectedCard = null;
+  selectedValue = null;
+  document.getElementById('useResult').disabled = true;
+}
+// Scroll to the Total maatras box that now holds the chosen number, highlight it and (on devices with
+// a mouse) put the cursor in it. Touch devices skip focus so the keyboard does not pop up.
+function focusGenTotal() {
+  const box = document.getElementById('genTotal');
+  box.scrollIntoView({behavior: 'smooth', block: 'center'});
+  box.classList.remove('hl');
+  void box.offsetWidth;
+  box.classList.add('hl');
+  setTimeout(() => box.classList.remove('hl'), 1800);
+  if (window.matchMedia && window.matchMedia('(hover: hover)').matches) setTimeout(() => box.focus({preventScroll: true}), 400);
+}
+function selectResult(card, value, asym) {
+  clearSelection();
+  selectedCard = card;
+  selectedValue = value;
+  card.classList.add('selected');
+  card.setAttribute('aria-pressed', 'true');
+  document.getElementById('useResult').disabled = false;
+  // Feed the generator automatically.
+  document.getElementById('genTotal').value = value;
+  setGenMode(asym ? 'asym' : 'sym');
+  focusGenTotal();
+  document.getElementById('genError').textContent = '';
+  document.getElementById('genResults').style.display = 'none';
+}
+document.getElementById('useResult').addEventListener('click', () => {
+  const card = document.getElementById('genCard');
+  card.scrollIntoView({behavior: 'smooth', block: 'start'});
+  card.classList.add('flash');
+  setTimeout(() => card.classList.remove('flash'), 1200);
+  document.getElementById('genTotal').focus({preventScroll: true});
+});
+
+// ---------- Korvai Generator ----------
+// P1 (k1) P2 (k1) ... Pn (k1) + U1 (k2) U2 (k2) U3 = total maatras
+const GEN_PAGE = 5;                                  // korvais shown per page
+const GEN_POOL = 50;                                 // korvais generated per click (10 pages of 5)
+const MADHYANGAM_SHARE = 0.5;                        // about half of each batch uses a Madhyangam, when one fits
+const DIGITS = [5, 6, 7, 8, 9, 10];                  // digits used to write Uttarangam (display only)
+const U_CHANGES = [0, 1, 2];                         // small change between the digits of u1, u2, u3
+const KARVAI_P = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];   // k1 (Poorvangam): 0 or 2-12, 1 is skipped
+const KARVAI_U = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; // k2 (Uttarangam): 0 to 12
+const MIN_PART = 2;                                  // smallest Poorvangam part
+const MAX_P_DIFF = 6;                                // largest gap between neighbouring Poorvangam parts
+const YATI = {srotovaha: 'Shrothovaha Yati', gopuccha: 'Gopuccha Yati', equal: 'Equal parts'};
+
+// Madhyangam: a "series" (5 to 10) is a pattern of multiples of x that adds up to the series number.
+const SERIES = {
+  5: [1, 1, 1, 1, 1],
+  6: [1, 2, 1, 1, 1],
+  7: [2, 2, 1, 1, 1],
+  8: [1, 2, 1, 1, 1, 1, 1],
+  9: [2, 2, 1, 1, 1, 1, 1],
+  10: [3, 2, 1, 1, 1, 1, 1]
+};
+const M_GROUPS = [2, 3, 4, 5];  // how many x-groups the Madhyangam has
+const M_STEPS = [1, 2];         // x reduces by this much from group to group
+const M_X_MAX = 6;              // largest starting x
+const M_X_MIN = 2;              // the series always runs down to x = 2: no group may be skipped
+
+function randInt(lo, hi) { return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// Uttarangam shapes: three parts, each a digit (5-10) repeated; the digits are only how a part is written.
+//   single : 9 (k2) 9 (k2) 9                    -> parts 9, 9, 9
+//   triple : 5 5 5 (k2) 6 6 6 (k2) 7 7 7        -> parts 15, 18, 21
+//   growing: 5 (k2) 5 5 (k2) 5 5 5              -> parts 5, 10, 15   (and the falling version)
+const U_OPTIONS = (() => {
+  const opts = [];
+  for (const reps of [1, 3]) {
+    for (const mid of DIGITS) {
+      for (const mag of U_CHANGES) {
+        for (const sign of (mag === 0 ? [1] : [1, -1])) {
+          const c = sign * mag;
+          const digits = [mid - c, mid, mid + c];
+          if (Math.min(...digits) < DIGITS[0] || Math.max(...digits) > DIGITS[DIGITS.length - 1]) continue;
+          opts.push({digits, reps: [reps, reps, reps], yati: c > 0 ? 'srotovaha' : c < 0 ? 'gopuccha' : 'equal'});
+        }
+      }
+    }
+  }
+  for (const d of DIGITS) {
+    opts.push({digits: [d, d, d], reps: [1, 2, 3], yati: 'srotovaha'});
+    opts.push({digits: [d, d, d], reps: [3, 2, 1], yati: 'gopuccha'});
+  }
+  return opts.map(o => ({...o, parts: o.digits.map((v, i) => v * o.reps[i])}));
+})();
+
+// Smaller digits (from 4) are allowed when a total is too small for a full korvai and only an Uttarangam is shown.
+const U_SMALL_DIGITS = [4, 5, 6, 7, 8, 9, 10];
+const U_OPTIONS_SMALL = (() => {
+  const opts = [];
+  for (const reps of [1, 3]) {
+    for (const mid of U_SMALL_DIGITS) {
+      for (const mag of U_CHANGES) {
+        for (const sign of (mag === 0 ? [1] : [1, -1])) {
+          const c = sign * mag;
+          const digits = [mid - c, mid, mid + c];
+          if (Math.min(...digits) < U_SMALL_DIGITS[0] || Math.max(...digits) > U_SMALL_DIGITS[U_SMALL_DIGITS.length - 1]) continue;
+          opts.push({digits, reps: [reps, reps, reps], yati: c > 0 ? 'srotovaha' : c < 0 ? 'gopuccha' : 'equal'});
+        }
+      }
+    }
+  }
+  for (const d of U_SMALL_DIGITS) {
+    opts.push({digits: [d, d, d], reps: [1, 2, 3], yati: 'srotovaha'});
+    opts.push({digits: [d, d, d], reps: [3, 2, 1], yati: 'gopuccha'});
+  }
+  return opts.map(o => ({...o, parts: o.digits.map((v, i) => v * o.reps[i])}));
+})();
+
+// Madhyangam options: e.g. series 5 with x = 4, 3, 2 -> (4 4 4 4 4) (3 3 3 3 3) (2 2 2 2 2) = 45 maatras
+const M_OPTIONS = (() => {
+  const out = [];
+  for (const series of Object.keys(SERIES).map(Number)) {
+    for (const g of M_GROUPS) {
+      for (const step of M_STEPS) {
+        const x0 = (g - 1) * step + M_X_MIN;   // start x, so that the last group is exactly x = 2
+        if (x0 > M_X_MAX) continue;
+        const xs = Array.from({length: g}, (_, i) => x0 - i * step);
+        out.push({series, xs, sum: series * xs.reduce((a, b) => a + b, 0)});
+      }
+    }
+  }
+  return out;
+})();
+
+// Keeps a random sample of `size` items out of any number offered (reservoir sampling) and counts them all.
+function makePool(size) {
+  const items = [];
+  let count = 0;
+  return {
+    items,
+    get count() { return count; },
+    add(item) {
+      count++;
+      if (items.length < size) items.push(item);
+      else { const j = randInt(0, count - 1); if (j < size) items[j] = item; }
+    }
+  };
+}
+
+// Poorvangam: n parts (3 to 5) in an arithmetic progression, neighbouring parts differing by at most
+// MAX_P_DIFF (Shrothovaha = rising, Gopuccha = falling, or equal), each followed by k1.
+function enumerateP(pBlock, emit) {
+  for (let nP = 3; nP <= 5; nP++) {
+    const tri = nP * (nP - 1) / 2;
+    for (const k1 of KARVAI_P) {
+      const sumP = pBlock - nP * k1;
+      for (let d = 0; d <= MAX_P_DIFF && nP * MIN_PART + d * tri <= sumP; d++) {
+        const rem = sumP - d * tri;
+        if (rem % nP !== 0) continue;
+        const a = rem / nP;
+        const rising = Array.from({length: nP}, (_, i) => a + i * d);
+        for (const pYati of (d === 0 ? ['equal'] : ['srotovaha', 'gopuccha'])) {
+          emit({P: pYati === 'gopuccha' ? [...rising].reverse() : rising, k1, pYati});
+        }
+      }
+    }
+  }
+}
+
+// Returns a random set of GEN_POOL korvais and how many fit this total in all.
+// About half of the generated korvais use a Madhyangam, when any fit.
+function generateKorvais(L) {
+  const plain = makePool(GEN_POOL);                               // Poorvangam + Uttarangam
+  const mid = makePool(Math.round(GEN_POOL * MADHYANGAM_SHARE));  // Poorvangam (optional) + Madhyangam + Uttarangam
+
+  for (const uo of U_OPTIONS) {
+    const uSum = uo.parts[0] + uo.parts[1] + uo.parts[2];
+    for (const k2 of KARVAI_U) {
+      const uBlock = uSum + 2 * k2;
+      const pBlock = L - uBlock;
+      if (pBlock <= 0 || pBlock === uBlock) continue;         // P must not equal U
+      enumerateP(pBlock, p => plain.add({
+        ...p, uDigits: uo.digits, uReps: uo.reps, uParts: uo.parts, uYati: uo.yati, k2, pBlock, uBlock, m: null
+      }));
+    }
+  }
+
+  // With a Madhyangam, Uttarangam must start with the series number (series 5 -> Uttarangam starts with 5).
+  for (const mo of M_OPTIONS) {
+    for (const uo of U_OPTIONS) {
+      if (uo.digits[0] !== mo.series) continue;
+      const uSum = uo.parts[0] + uo.parts[1] + uo.parts[2];
+      for (const k2 of KARVAI_U) {
+        const uBlock = uSum + 2 * k2;
+        const pBlock = L - mo.sum - uBlock;                   // Poorvangam may be 0 (absent)
+        if (pBlock < 0 || pBlock === uBlock) continue;
+        const base = {uDigits: uo.digits, uReps: uo.reps, uParts: uo.parts, uYati: uo.yati, k2, pBlock, uBlock, m: mo};
+        if (pBlock === 0) mid.add({...base, P: [], k1: null, pYati: null});
+        else enumerateP(pBlock, p => mid.add({...base, ...p}));
+      }
+    }
+  }
+
+  const items = shuffle([...mid.items]);
+  const pp = shuffle([...plain.items]);
+  while (items.length < GEN_POOL && pp.length) items.push(pp.pop());
+  return {items: shuffle(items), total: plain.count + mid.count};
+}
+
+// A part written as a digit repeated r times: 5 x 3 -> "555" (10 is written "10 10 10").
+function writeDigit(d, r) { return d === 10 ? Array(r).fill('10').join(' ') : String(d).repeat(r); }
+
+function korvaiParts(kv) {
+  const p = kv.P.map(v => `${v} (${kv.k1})`).join(' ');
+  const m = kv.m ? kv.m.xs.map(x => SERIES[kv.m.series].map(w => w * x).join(' ')).join(' + ') : '';
+  const [a, b, c] = kv.uDigits.map((d, i) => writeDigit(d, kv.uReps[i]));
+  const u = `${a} (${kv.k2}) ${b} (${kv.k2}) ${c}`;
+  return {p, m, u};
+}
+
+// ---------- Asymmetric korvais ----------
+// Uttarangam is the same in all three repetitions. Poorvangam follows the Gopuccha series 4d, 3d, 2d, d, 0
+// (each followed by k1): repetition 1 plays 3 terms, repetition 2 plays 4, repetition 3 plays all 5.
+// Sum of the three Poorvangams = 29d + 12 k1, so grand total = 29d + 12 k1 + 3 U.
+const ASYM_STEPS = [1, 2, 3, 4, 5, 6];
+const ASYM_K1 = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];   // k1 must be at least 2 so the last bare k1 is a real step
+function asymTotal(d, k1, uBlock) { return 29 * d + 12 * k1 + 3 * uBlock; }
+function forEachAsym(fn) {
+  for (const d of ASYM_STEPS) for (const k1 of ASYM_K1) for (const uo of U_OPTIONS) {
+    const uSum = uo.parts[0] + uo.parts[1] + uo.parts[2];
+    for (const k2 of KARVAI_U) fn(d, k1, uo, k2, uSum + 2 * k2);
+  }
+}
+const ASYM_TOTALS = (() => { const s = new Set(); forEachAsym((d, k1, uo, k2, u) => s.add(asymTotal(d, k1, u))); return s; })();
+
+// Grand totals (maatras) that land on Samam + Eduppu after cycles, and for which an asymmetric korvai exists.
+function asymmetricTotals(beats2, nadai, eduppu) {
+  const out = [];
+  for (let k = 1; k <= MAX_CYCLES && out.length < RESULT_COUNT; k++) {
+    const total4 = nadai * (2 * beats2 * k + eduppu);
+    if (total4 <= 0 || total4 % 4 !== 0) continue;
+    const t = total4 / 4;
+    if (t >= 3 * MAX_LENGTH) break;
+    if (ASYM_TOTALS.has(t)) out.push(t);
+  }
+  return out;
+}
+function generateAsym(L) {
+  const pool = makePool(GEN_POOL);
+  forEachAsym((d, k1, uo, k2, u) => { if (asymTotal(d, k1, u) === L) pool.add({d, k1, k2, uo, uBlock: u}); });
+  return {items: shuffle(pool.items), total: pool.count};
+}
+function asymReps(a) {
+  const terms = [4 * a.d, 3 * a.d, 2 * a.d, a.d, 0];
+  const [x, y, z] = a.uo.digits.map((dg, i) => writeDigit(dg, a.uo.reps[i]));
+  const u = `${x} (${a.k2}) ${y} (${a.k2}) ${z}`;
+  return [3, 4, 5].map(n => {
+    const used = terms.slice(0, n);
+    return {
+      p: used.map(v => v ? `${v} (${a.k1})` : `(${a.k1})`).join(' '),
+      u,
+      total: used.reduce((sum, v) => sum + v, 0) + n * a.k1 + a.uBlock
+    };
+  });
+}
+function renderAsym(a, i) {
+  const reps = asymReps(a);
+  const card = document.createElement('div');
+  card.className = 'korvai-card';
+  const top = document.createElement('div');
+  top.className = 'korvai-top';
+  const label = document.createElement('span');
+  label.className = 'number';
+  label.textContent = `Asymmetric korvai ${i + 1} · ${reps.map(r => r.total).join(' + ')} = ${reps.reduce((sum, r) => sum + r.total, 0)}`;
+  const copy = document.createElement('button');
+  copy.type = 'button';
+  copy.className = 'copy';
+  copy.textContent = 'Copy';
+  copy.addEventListener('click', () => {
+    const text = reps.map((r, j) => `${j + 1}: ${r.p} + ${r.u}`).join('\n');
+    const done = () => { copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy'; }, 1200); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => {});
+  });
+  top.append(label, copy);
+  card.append(top);
+  reps.forEach((r, j) => {
+    const row = document.createElement('div');
+    row.className = 'rep';
+    const n = document.createElement('span');
+    n.className = 'rep-n';
+    n.textContent = j + 1;
+    const line = document.createElement('div');
+    line.className = 'korvai-line';
+    const p = document.createElement('span');
+    p.className = 'korvai-p';
+    p.textContent = r.p;
+    const plus = document.createElement('span');
+    plus.className = 'korvai-plus';
+    plus.textContent = ' + ';
+    const u = document.createElement('span');
+    u.className = 'korvai-u';
+    u.textContent = r.u;
+    line.append(p, plus, u);
+    const tot = document.createElement('span');
+    tot.className = 'rep-tot';
+    tot.textContent = r.total;
+    row.append(n, line, tot);
+    card.append(row);
+  });
+  return card;
+}
+
+// Generator mode: symmetric (same korvai played three times) or asymmetric (grows each repetition).
+function applyGenMode() {
+  const asym = genAsym;
+  document.getElementById('genTotalLabel').textContent = asym ? 'Grand total maatras (all 3 repetitions)' : 'Total maatras';
+  document.getElementById('genTotal').placeholder = asym ? (autoTotals ? 'Auto (from the decoder)' : 'e.g. 98') : 'e.g. 96';
+  document.getElementById('legendM').hidden = asym;
+}
+function setGenMode(mode) {
+  genAsym = mode === 'asym';
+  applyGenMode();
+}
+// Typing a total by hand always means a normal (symmetric) korvai.
+document.getElementById('genTotal').addEventListener('input', () => {
+  autoTotals = null;
+  setGenMode('sym');
+});
+
+// Asymmetric korvais sent straight from the decoder: mix korvais drawn from every valid grand total.
+function showAsymDirect(totals, intro) {
+  autoTotals = {totals, intro};
+  setGenMode('asym');
+  document.getElementById('genTotal').value = '';
+  applyGenMode();
+  document.getElementById('calcStatus').textContent = 'Asymmetric korvais are ready in the Korvai Generator.';
+  generate();
+  const card = document.getElementById('genCard');
+  if (window.matchMedia && window.matchMedia('(max-width: 980px)').matches) card.scrollIntoView({behavior: 'smooth', block: 'start'});
+  card.classList.add('flash');
+  setTimeout(() => card.classList.remove('flash'), 1200);
+}
+function generateAuto() {
+  const all = [];
+  let total = 0;
+  autoTotals.totals.forEach(L => { const r = generateAsym(L); r.items.forEach(k => all.push(k)); total += r.total; });
+  const items = shuffle(all).slice(0, GEN_POOL);
+  const error = document.getElementById('genError');
+  if (!items.length) { error.textContent = 'No asymmetric korvai found for this thalam and Eduppu.'; return; }
+  document.getElementById('genIntro').textContent = `${autoTotals.intro} · Asymmetric korvais (grand totals ${autoTotals.totals.join(', ')} maatras)`;
+  showGenResults(items, total, renderAsym);
+}
+
+document.getElementById('generate').addEventListener('click', generate);
+document.getElementById('genTotal').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+
+// Too small for Poorvangam + Uttarangam: show Uttarangam alone, e.g. 22 = 6 (2) 6 (2) 6
+function generateUttarangamOnly(L) {
+  const pool = makePool(GEN_POOL);
+  for (const uo of U_OPTIONS_SMALL) {
+    const uSum = uo.parts[0] + uo.parts[1] + uo.parts[2];
+    for (const k2 of KARVAI_U) {
+      if (uSum + 2 * k2 !== L) continue;
+      pool.add({P: [], k1: null, pYati: null, m: null, uOnly: true,
+        uDigits: uo.digits, uReps: uo.reps, uParts: uo.parts, uYati: uo.yati, k2, pBlock: 0, uBlock: L});
+    }
+  }
+  return {items: shuffle(pool.items), total: pool.count};
+}
+
+function generate() {
+  const error = document.getElementById('genError');
+  const results = document.getElementById('genResults');
+  error.textContent = '';
+  results.style.display = 'none';
+  document.getElementById('genList').innerHTML = '';
+
+  const totalRaw = document.getElementById('genTotal').value.trim();
+  if (totalRaw === '' && autoTotals && genAsym) { generateAuto(); return; }
+  const L = Number(totalRaw);
+  if (totalRaw === '' || !Number.isInteger(L) || L < 1) {
+    error.textContent = 'Enter the total maatras as a whole number.';
+    return;
+  }
+  const asym = genAsym;
+  let res = asym ? generateAsym(L) : generateKorvais(L);
+  const uOnly = !asym && !res.items.length;
+  if (uOnly) res = generateUttarangamOnly(L);
+  if (!res.items.length) {
+    error.textContent = asym
+      ? 'No asymmetric korvai fits this grand total. Use a value from the Matra Count Calculator.'
+      : 'No korvai fits this total with the current rules. Try a different total.';
+    return;
+  }
+  document.getElementById('genIntro').textContent = asym ? `Grand total: ${L} maatras (3 repetitions)` : `Total: ${L} maatras`;
+  showGenResults(res.items, res.total, asym ? renderAsym : renderSym);
+}
+
+function renderSym(kv, i) {
+  const card = document.createElement('div');
+  card.className = 'korvai-card';
+
+  const top = document.createElement('div');
+  top.className = 'korvai-top';
+  const label = document.createElement('span');
+  label.className = 'number';
+  label.textContent = `Korvai ${i + 1}`;
+
+  const parts = korvaiParts(kv);
+  const plainText = [parts.p, parts.m, parts.u].filter(Boolean).join(' + ');
+  const copy = document.createElement('button');
+  copy.type = 'button';
+  copy.className = 'copy';
+  copy.textContent = 'Copy';
+  copy.addEventListener('click', () => {
+    const done = () => { copy.textContent = 'Copied'; setTimeout(() => { copy.textContent = 'Copy'; }, 1200); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(plainText).then(done, () => {});
+  });
+  top.append(label, copy);
+
+  const line = document.createElement('div');
+  line.className = 'korvai-line';
+  [['korvai-p', parts.p], ['korvai-m', parts.m], ['korvai-u', parts.u]]
+    .filter(([, text]) => text)
+    .forEach(([cls, text], idx) => {
+      if (idx > 0) {
+        const plus = document.createElement('span');
+        plus.className = 'korvai-plus';
+        plus.textContent = ' + ';
+        line.append(plus);
+      }
+      const span = document.createElement('span');
+      span.className = cls;
+      span.textContent = text;
+      line.append(span);
+    });
+
+  card.append(top, line);
+  return card;
+}
+
+// ---------- Result counts and paging ----------
+// A pager shows how many results there are and lets the user move through them page by page.
+function makePager(withCount, onPage, extraClass) {
+  const el = document.createElement('div');
+  el.className = 'pager' + (extraClass ? ' ' + extraClass : '');
+  const count = document.createElement('span');
+  count.className = 'count';
+  const nav = document.createElement('span');
+  nav.className = 'nav';
+  const prev = document.createElement('button');
+  prev.type = 'button';
+  prev.textContent = '← Previous';
+  prev.addEventListener('click', () => onPage(-1));
+  const label = document.createElement('span');
+  label.className = 'page';
+  const next = document.createElement('button');
+  next.type = 'button';
+  next.textContent = 'Next →';
+  next.addEventListener('click', () => onPage(1));
+  nav.append(prev, label, next);
+  if (withCount) el.append(count);
+  el.append(nav);
+  return {
+    el,
+    update(text, page, pages) {
+      count.textContent = text;
+      label.textContent = `Page ${page + 1} of ${pages}`;
+      prev.disabled = page <= 0;
+      next.disabled = page >= pages - 1;
+      nav.style.display = pages > 1 ? 'flex' : 'none';
+      el.style.display = (withCount || pages > 1) ? 'flex' : 'none';
+    }
+  };
+}
+function scrollToTopOf(id) {
+  const el = document.getElementById(id);
+  if (el.getBoundingClientRect().top < 0) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+// Decoder values
+let decAnswers = [], decPage = 0, decCap = '';
+const decPagerTop = makePager(true, d => { decPage += d; renderDecoder(); scrollToTopOf('results'); });
+const decPagerBottom = makePager(false, d => { decPage += d; renderDecoder(); scrollToTopOf('results'); }, 'bottom');
+document.getElementById('decPagerTop').append(decPagerTop.el);
+document.getElementById('decPagerBottom').append(decPagerBottom.el);
+function renderDecoder() {
+  const grid = document.getElementById('answerGrid');
+  grid.innerHTML = '';
+  selectedCard = null;   // the selected value is kept, its card is found again below
+  const start = decPage * DEC_PAGE;
+  const slice = decAnswers.slice(start, start + DEC_PAGE);
+  slice.forEach((a, i) => addCard(grid, start + i, a.title, a.detail, a.value, a.asym));
+  const pages = Math.max(1, Math.ceil(decAnswers.length / DEC_PAGE));
+  const n = decAnswers.length;
+  const text = pages > 1
+    ? `Showing ${start + 1}–${start + slice.length} of ${n} values · ${decCap}`
+    : `${n} value${n === 1 ? '' : 's'} found · ${decCap}`;
+  decPagerTop.update(text, decPage, pages);
+  decPagerBottom.update(text, decPage, pages);
+}
+
+// Generated korvais
+let genState = {items: [], total: 0, page: 0, render: null};
+const genPagerTop = makePager(true, d => changeGenPage(d));
+const genPagerBottom = makePager(false, d => changeGenPage(d), 'bottom');
+document.getElementById('genPagerTop').append(genPagerTop.el);
+document.getElementById('genPagerBottom').append(genPagerBottom.el);
+function changeGenPage(d) {
+  genState.page += d;
+  renderGen();
+  scrollToTopOf('genResults');
+}
+function renderGen() {
+  const list = document.getElementById('genList');
+  list.innerHTML = '';
+  const {items, page, render} = genState;
+  const start = page * GEN_PAGE;
+  const slice = items.slice(start, start + GEN_PAGE);
+  slice.forEach((kv, k) => list.appendChild(render(kv, start + k)));
+  const pages = Math.max(1, Math.ceil(items.length / GEN_PAGE));
+  const n = items.length;
+  const text = pages > 1
+    ? `Showing ${start + 1}–${start + slice.length} of ${n} korvais`
+    : `${n} korvai${n === 1 ? '' : 's'} found`;
+  genPagerTop.update(text, page, pages);
+  genPagerBottom.update(text, page, pages);
+}
+function showGenResults(items, total, render) {
+  genState = {items, total, page: 0, render};
+  document.getElementById('genNote').textContent = total > items.length
+    ? `${items.length} korvais generated from ${total.toLocaleString()} possible. Press Generate Korvai for a fresh set.`
+    : `All ${total.toLocaleString()} possible korvai${total === 1 ? '' : 's'} shown.`;
+  renderGen();
+  document.getElementById('genResults').style.display = 'block';
+}
+
+// Keep the header mandalas still for people who prefer reduced motion.
+if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.querySelectorAll('.mandala').forEach(s => { if (s.pauseAnimations) s.pauseAnimations(); });
+}
+</script>
+</body>
+</html>
